@@ -1,0 +1,161 @@
+The following text briefly describes the equation of state (EOS) files found
+in this directory and how to read them.  These files, also available
+on the AAS CD-ROM Vol. 5, are meant to accompany Saumon, Chabrier and
+Van Horn (1994, hereafter, SCVH) and provide complete equations of state
+for hydrogen and helium.  Equations of state for mixtures of hydrogen
+and helium can be obtained by compositional interpolation as described
+in SCVH.
+
+1)  DESCRIPTION OF THE FILES
+
+There are seven ASCII files:
+
+   File name               Contents
+
+1) README.DOC           This text file.  Basic information on the tables.
+2) READ.F               Short FORTRAN program which reads the above tables
+                        (shows the format of the tables)
+3) H_TAB_I.DAT          Interpolated hydrogen EOS table  2.10 < log T < 7.06
+4) RHO_CRIT.DAT         Coexistence curve of the H plasma phase transition (PPT)
+5) H_TAB_P1.DAT         Small table for the EOS near the plasma phase transition
+                        (PPT) of hydrogen: Phase 1 (low density phase)
+                        3.54 < log T < 4.82
+6) H_TAB_P2.DAT         Small table for the EOS near the plasma phase transition
+                        (PPT) of hydrogen: Phase 2 (high density phase)
+                        3.54 < log T < 4.82
+7) HE_TAB_I.DAT         Interpolated helium EOS table  2.10 < log T < 7.06
+
+These files occupy about 970 Kbytes of disk space.
+Files 3 to 6 are for the hydrogen EOS, and the last one is for helium.
+Both equations of state are based on the free energy minimization method.
+The Helmholtz free energy model for hydrogen is fully described in Saumon and
+Chabrier (1991; 1992) and Chabrier (1990).  The model for the helium EOS is
+found in SCVH.  The latter paper also shows both equations of state in graphic
+form (thermodynamic surfaces), contains a critique of the present equations
+of state, and compares these calculations with other EOS commonly used in
+astrophysics.
+
+2) CONTENT OF THE EOS TABLES
+
+The equations of state are tabulated along isotherms.  As an example, these are
+the first ten lines of H_TAB_I.A:
+
+ 2.10  30
+  4.00  1.00000E+00  0.00000E+00  -5.7154   8.8910  10.1201  -1.0000   1.0000   0.1687  -0.0530   0.3142
+  4.20  1.00000E+00  0.00000E+00  -5.5154   8.8803  10.1201  -1.0000   1.0000   0.1729  -0.0543   0.3144
+  4.40  1.00000E+00  0.00000E+00  -5.3154   8.8693  10.1201  -1.0000   1.0000   0.1773  -0.0557   0.3144
+  4.60  1.00000E+00  0.00000E+00  -5.1154   8.8580  10.1201  -1.0000   1.0000   0.1820  -0.0572   0.3144
+  4.80  1.00000E+00  0.00000E+00  -4.9154   8.8464  10.1201  -1.0001   1.0000   0.1869  -0.0588   0.3144
+  5.00  1.00000E+00  0.00000E+00  -4.7154   8.8345  10.1200  -1.0001   1.0000   0.1921  -0.0604   0.3144
+  5.20  1.00000E+00  0.00000E+00  -4.5154   8.8222  10.1200  -1.0002   0.9999   0.1976  -0.0621   0.3145
+  5.40  1.00000E+00  0.00000E+00  -4.3154   8.8096  10.1200  -1.0003   0.9999   0.2034  -0.0640   0.3145
+  5.60  1.00000E+00  0.00000E+00  -4.1155   8.7966  10.1200  -1.0005   0.9999   0.2096  -0.0659   0.3145
+
+The first line gives log T (K) and the number of pressure points along that
+isotherm.  The lowest value of the pressure is log P = 4, and it increases in
+steps of 0.2 for all isotherms, but the maximum pressure is not the same for
+all isotherms (see Figs 18 and 20 of SCVH).  Note that the (log T, log P)
+coverage of H_TAB_I.A and HE_TAB_I.A are identical.  Each row then provides:
+
+log P:                P is the pressure in dyn/cm**2.
+X(H2):                The number concentration of H2 molecules (He atoms for
+                      helium).
+X(H):                 The number concentration of H atoms (He+ ions for helium).
+log rho:              rho is the mass density in g/cm**3.
+log S:                S is the entropy in erg/g/K.
+log U:                U is the internal energy in erg/g.  The zero point of
+                      energy is the ground state of the H2 molecule for
+                      hydrogen, and the ground state of the He atom for helium.
+d log rho/d log T|P:  Logarithmic derivative of the density with respect to the
+                      temperature at constant P.
+d log rho/d log P|T:  Logarithmic derivative of the density with respect to the
+                      pressure at constant T.
+d log S/d log T|P:    Logarithmic derivative of the entropy with respect to the
+                      temperature at constant P.
+d log S/d log P|T:    Logarithmic derivative of the entropy with respect to the
+                      pressure at constant T.
+d log T/d log P|S     The adiabatic gradient.
+
+All logarithms are in base 10.  The contribution from the photon gas is NOT
+included.
+
+3) INTERPOLATION NEAR THE PLASMA PHASE TRANSITION
+
+The file RHO_CRIT contains the coexistence curve for the plasma phase
+transition (PPT) of hydrogen.  It allows the determination of the phase of the
+system when this is of concern in a particular application of the hydrogen EOS.
+The file is reproduced below, with column headings added:
+
+  log T   log P      log rho      log rho
+                     Phase 1      Phase 2
+
+  3.540   12.360     -.098484     -.027440
+  3.620   12.345     -.111784     -.029363
+  3.700   12.330     -.126259     -.036724
+  3.780   12.289     -.152205     -.055079
+  3.860   12.210     -.195296     -.095751
+  3.940   12.143     -.237227     -.132518
+  4.020   12.054     -.293355     -.186550
+  4.100   11.952     -.362653     -.259015
+  4.180   11.800     -.437500     -.437500
+
+Columns 3 and 4 define the extent of the metastable region and yield the
+associated density discontinuity.  The last entry of the table corresponds to
+the critical point of the PPT.
+
+The tables H_TAB_P1.A and H_TAB_P2.A are intended to facilitate interpolation
+near the PPT, if this feature of the EOS is desired.  To interpolate as
+accurately as possible in the vicinity of the discontinuities associated with
+the PPT, the following procedure should be used:
+
+                    **** Skeletal FORTRAN Program ****
+
+C  First check that the requested (log T, log P) point, given by TEMP and PG,
+C  falls in the pressure ionization region covered by these two tables:
+      IF(TEMP.LT.4.82 .AND. TEMP.GE.3.54 .AND. PG.GT.10.5 .AND. PG.LT.14.1) THEN
+          IF(TEMP.GE.4.18) THEN
+C  This is for an isotherm above the critical temperature of the PPT
+              PTRANS=11.75
+          ELSE
+C  And now for an isotherm below the critical temperature
+
+        ....   Determine the transition pressure (PTRANS) of the PPT at this
+        ....   temperature by interpolating in the coexistence curve table:
+        ....   rho_critical
+
+          ENDIF
+          IF(PG.LT.PTRANS) THEN
+
+        ....   Interpolate in the Phase 1 table: H_tab_P1.a
+
+          ELSE
+
+        ....   Interpolate in the Phase 2 table: H_tab_P2.a
+
+          ENDIF
+
+
+4) ADDITIONAL ASSISTANCE
+
+Please direct any questions and comments about the tables to Didier Saumon
+at dsaumon@lpl.arizona.edu.  If you copy and use these EOS tables, please
+send an e-mail message to the same address stating that you have done so.
+This will allow us to compile a list of users for announcing future upgrades
+in the EOS.
+
+Didier Saumon
+Lunar and Planetary Laboratory
+University of Arizona
+Tucson, AZ 85721
+USA
+
+Phone: (602) 621-6362
+e-mail: dsaumon@lpl.arizona.edu
+
+
+5) REFERENCES
+
+Chabrier, G. 1990, J. Phys. (Paris) 51, 1607.
+Saumon, D. and Chabrier, G. 1991, Phys. Rev. A 44, 5122.
+Saumon, D. and Chabrier, G. 1992, Phys. Rev. A 46, 2084.
+Saumon, D., Chabrier, G., and Van Horn, H.M. 1994,  Ap. J. Supp., in press.
