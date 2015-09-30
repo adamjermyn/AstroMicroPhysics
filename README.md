@@ -11,11 +11,11 @@ Others may be added if there is sufficient interest.
 
 The interfaces developed should:
 
-1. Be minimal and usable.
+1. Wherever possible make use of existing Python infrastructure, particularly NumPy and Scipy.
 2. Be well documented.
 3. Take inputs and give outputs in C.G.S.K. (centimeter, gram, second, kelvin) units. The only exception to this is for mean particle masses, which are taken and given in units of the proton mass.
 4. Have units noted both near the relevant functions in the code and in the broader documentation.
-5. Depend only on Python, NumPy, and SciPy. Compilers are okay (but see 7 below).
+5. Depend only on Python, NumPy, SciPy, and related standard Python packages. Compilers are okay (but see 7 below).
 6. Rely on as simple a build system as possible, and be platform-independent.
 7. Require minimal modifications to the underlying tables or the routines which come with them. Where required, these modifications must be documented clearly, and the unmodified files must be distributed as well.
 8. Be distributed with the relevant tables/routines.
