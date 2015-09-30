@@ -27,6 +27,7 @@ interfaces should not depend in any way on the helper scripts).
 The tables currently contained in this project are:
 
 OPAL2005EOS - http://opalopacity.llnl.gov/EOS_2005/
+
 SCVH EOS - http://adsabs.harvard.edu/abs/1995ApJS...99..713S
 
 Finally, this is all very much a work in progress, so if any of the above doesn't currently hold
