@@ -1,4 +1,4 @@
-# StellarEOS
+# AstroMicroPhysics
 
 The purpose of this project is to provide Python interfaces to various microphysics
 codes commonly used in astrophysical simulations. At the moment, the planned scope
