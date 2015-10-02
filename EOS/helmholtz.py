@@ -153,7 +153,7 @@ class helm:
 	This class provides an object for storing and manipulating Helmholtz equation of state tables.
 	"""
 
-	def __init__(self,fname='helm_table.dat',logTmin=3.0,logTmax=13.0,\
+	def __init__(self,fname='SourceTables/helm_table.dat',logTmin=3.0,logTmax=13.0,\
 				logRhoMin=-12.0,logRhoMax=15.0,tRes=101,rhoRes=271):
 		"""
 		Arguments:
