@@ -1,5 +1,31 @@
 import numpy as np
 
+"""
+This is a python implementation of the interpolation and thermodynamics
+routines used in the helmholtz equation of state.
+
+
+
+Go to
+
+http://cococubed.asu.edu/code_pages/eos.shtml
+
+for more details on the helmholtz equation of state by Frank Timmes et. al. Also, see the paper on this code:
+
+F. X. Timmes and F. Douglas Swesty, The Accuracy, Consistency, and Speed of an Electron-Positron Equation of State Based on Table Interpolation of the Helmholtz Free Energy, ApJ 126-2-501 (2000). http://stacks.iop.org/0067-0049/126/i=2/a=501. 
+
+
+A note on performance:
+
+While it is possible to call this code on individual points of interest, there is
+a substantial performance reduction associated with this. Scalar calls take roughly
+1.5 milliseconds on a 2015 2.5GHz mobile Core i7. Vectorized calls, on the other hand,
+take 4 microseconds each on the same system. As a result, you are strongly encouraged
+to assemble all temperature, density, atomic weight, and charge data into vectors
+which may be passed to this routine, rather than calling it many times on individual
+points.
+"""
+
 # Mathematical constants
 pi          = np.pi
 forpi       = 4*np.pi
@@ -153,7 +179,7 @@ class helm:
 	This class provides an object for storing and manipulating Helmholtz equation of state tables.
 	"""
 
-	def __init__(self,fname='SourceTables/helm_table.dat',logTmin=3.0,logTmax=13.0,\
+	def __init__(self,fname='helm_table.dat',logTmin=3.0,logTmax=13.0,\
 				logRhoMin=-12.0,logRhoMax=15.0,tRes=101,rhoRes=271):
 		"""
 		Arguments:
@@ -263,15 +289,18 @@ class helm:
 						'cv','cp','gam1','gam2','gam3','nabad','sound']
 
 
-	def eos(self,t,rho,abar,zbar):
+	def eos(self,temp,den,abar,zbar):
 		"""
 		Computes the equation of state and returns the various thermodynamic quantities.
 
 		Arguments:
-		t   - Temperature (K).
-		rho - Density (g/cm^3).
-		abar- Average atomic weight (in proton masses).
-		zion- Average Z among the isotopes present.
+		temp - Temperature (K).
+		den  - Density (g/cm^3).
+		abar - Average atomic weight (in proton masses).
+		zion - Average Z among the isotopes present.
+
+
+		TODO: Document outputs
 
 		All arguments should either be floats or 1-dimensional numpy arrays. Mixed inputs
 		between floats and arrays are allowed so long as each array present has the same length.
@@ -281,17 +310,17 @@ class helm:
 
 		# Sanitize inputs so that only numpy arrays come in
 
-		if not hasattr(t, "__len__"):
-			temp = [t]
-		if not hasattr(rho, "__len__"):
-			den = [rho]
+		if not hasattr(temp, "__len__"):
+			temp = [temp]
+		if not hasattr(den, "__len__"):
+			den = [den]
 		if not hasattr(abar, "__len__"):
 			abar = [abar]
 		if not hasattr(zbar, "__len__"):
 			zbar = [zbar]
 
-		temp = np.array(t)
-		den = np.array(rho)
+		temp = np.array(temp)
+		den = np.array(den)
 		abar = np.array(abar)
 		zbar = np.array(zbar)
 
@@ -703,8 +732,6 @@ class helm:
 
 		degasdd = deiondd + deepdd + decouldd
 		degasdt = deiondt + deepdt + decouldt
-		print deiondt,deepdt,decouldt
-		print degasdt
 
 		degasda = deionda + deepda + decoulda
 		degasdz = deiondz + deepdz + decouldz
@@ -803,7 +830,6 @@ class helm:
 
 
 h = helm()
-print h.fname
 
 n = 10000
 temps = 1e6*np.random.rand(n)
@@ -815,7 +841,12 @@ import time
 start = time.time()
 out = h.eos(temps,rhos,a,z)
 end = time.time()
-print min(temps),max(temps),min(rhos),max(rhos)
+print (end - start)/n
+
+start = time.time()
+for i in range(n):
+	out = h.eos(temps[i],rhos[i],a,z)
+end = time.time()
 print (end - start)/n
 
 
