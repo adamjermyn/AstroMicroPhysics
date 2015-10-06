@@ -73,7 +73,7 @@ def sanitizeInput(temp,pressure):
 	if maxLen > 1:
 		if len(temp) == 1:
 			temp = temp[0]*np.ones(maxLen)
-		if len(den) == 1:
+		if len(pressure) == 1:
 			pressure = pressure[0]*np.ones(maxLen)
 
 	return temp,pressure
@@ -86,42 +86,36 @@ class scvh:
 		# Read in the hydrogen EOS table
 		hTable,logTvals,logPvals = readTables(dirname+'H_TAB_I.DAT')
 
-		# We store the tables as a dictionary, with named 2D tables corresponding to the stored variables
 		self.Hnames = ['XH2','XH','logRho','logS','logU','dLogRho/dLogT|P','dLogRho/dLogP|T','dLogS/dLogT|P','dLogS/dLogP|T','dLogT/dLogP|S']
-		self.hTables = {self.Hnames[i]:hTable[:,:,i] for i in range(len(self.Hnames))}
+		self.hTables = np.copy(hTable)
 		self.hLogTvals = logTvals
 		self.hLogPvals = logPvals
 
 		# Read in the helium EOS table
 		hTable,logTvals,logPvals = readTables(dirname+'HE_TAB_I.DAT')
 
-		# We store the tables as a dictionary, with named 2D tables corresponding to the stored variables
 		self.HeNames = ['XHe','XHe+','logRho','logS','logU','dLogRho/dLogT|P','dLogRho/dLogP|T','dLogS/dLogT|P','dLogS/dLogP|T','dLogT/dLogP|S']
-		self.HeTables = self.hTable
-#		{self.HeNames[i]:hTable[:,:,i] for i in range(len(self.HeNames))}
+		self.HeTables = np.copy(hTable)
 		self.HeLogTvals = logTvals
 		self.HeLogPvals = logPvals
 
 		# Read in the hydrogen phase transition data
 		rho_crit = np.transpose(np.loadtxt(dirname+'RHO_CRIT.DAT'))
 
-		# We store the tables as a dictionary, with named 2D tables corresponding to the stored variables
 		self.critNames = ['logT','logP','logRho1','logRho2']		
-		self.rhoCrit = {self.critNames[i]:rho_crit[i] for i in range(len(self.critNames))}
+		self.rhoCrit = rho_crit
 
 		# Read in the Phase 1 transition data
 		hTable,logTvals,logPvals = readTables(dirname+'H_TAB_P1.DAT')
 
-		# We store the tables as a dictionary, with named 2D tables corresponding to the stored variables
-		self.P1Tables = {self.Hnames[i]:hTable[:,:,i] for i in range(len(self.Hnames))}
+		self.P1Tables = np.copy(hTable)
 		self.P1LogTvals = logTvals
 		self.P1LogPvals = logPvals
 
 		# Read in the Phase 2 transition data
 		hTable,logTvals,logPvals = readTables(dirname+'H_TAB_P2.DAT')
 
-		# We store the tables as a dictionary, with named 2D tables corresponding to the stored variables
-		self.P2Tables = {self.Hnames[i]:hTable[:,:,i] for i in range(len(self.Hnames))}
+		self.P2Tables = np.copy(hTable)
 		self.P2LogTvals = logTvals
 		self.P2LogPvals = logPvals
 
@@ -130,33 +124,33 @@ class scvh:
 		# Create interpolator for He
 		heMod = np.copy(self.HeTables)
 		heMod[np.isnan(heMod)] = 0 # Only okay because the NaN values appear on the edges
-		self.HeMask = 1.0*np.isnan(heMod)
-		self.HeInterp = RectBivariateSpline(self.HeLogTvals,self.HeLogPvals,heMod,kx=3,ky=3)
+		self.HeMask = 1-1.0*np.isnan(heMod[...,0])
+		self.HeInterp = [RectBivariateSpline(self.HeLogTvals,self.HeLogPvals,heMod[...,i],kx=3,ky=3) for i in range(heMod.shape[-1])]
 		self.HeMaskInterp = RectBivariateSpline(self.HeLogTvals,self.HeLogPvals,self.HeMask,kx=3,ky=3)
 
 		# Create interpolator for H
 		hMod = np.copy(self.hTables)
 		hMod[np.isnan(hMod)] = 0 # Only okay because the NaN values appear on the edges
-		self.HMask = 1.0*np.isnan(hMod)
-		self.HInterp = RectBivariateSpline(self.hLogTvals,self.hLogPvals,hMod,kx=3,ky=3)
+		self.HMask = 1-1.0*np.isnan(hMod[...,0])
+		self.HInterp = [RectBivariateSpline(self.hLogTvals,self.hLogPvals,hMod[...,i],kx=3,ky=3) for i in range(hMod.shape[-1])]
 		self.HMaskInterp = RectBivariateSpline(self.hLogTvals,self.hLogPvals,self.HMask,kx=3,ky=3)
 
 		# Create interpolator for H (Phase transition 1)
 		hMod = np.copy(self.P1Tables)
 		hMod[np.isnan(hMod)] = 0 # Only okay because the NaN values appear on the edges
-		self.P1Mask = 1.0*np.isnan(hMod)
-		self.P1Interp = RectBivariateSpline(self.P1LogTvals,self.P1LogPvals,hMod,kx=3,ky=3)
+		self.P1Mask = 1-1.0*np.isnan(hMod[...,0])
+		self.P1Interp = [RectBivariateSpline(self.P1LogTvals,self.P1LogPvals,hMod[...,i],kx=3,ky=3) for i in range(hMod.shape[-1])]
 		self.P1MaskInterp = RectBivariateSpline(self.P1LogTvals,self.P1LogPvals,self.P1Mask,kx=3,ky=3)
 
 		# Create interpolator for H (Phase transition 2)
 		hMod = np.copy(self.P2Tables)
-		hMod[np.isnan] = 0 # Only okay because the NaN values appear on the edges
-		self.P2Mask = 1.0*np.isnan(hMod)
-		self.P2Interp = RectBivariateSpline(self.P2LogTvals,self.P2LogPvals,hMod,kx=3,ky=3)
+		hMod[np.isnan(hMod)] = 0 # Only okay because the NaN values appear on the edges
+		self.P2Mask = 1-1.0*np.isnan(hMod[...,0])
+		self.P2Interp = [RectBivariateSpline(self.P2LogTvals,self.P2LogPvals,hMod[...,i],kx=3,ky=3) for i in range(hMod.shape[-1])]
 		self.P2MaskInterp = RectBivariateSpline(self.P2LogTvals,self.P2LogPvals,self.P2Mask,kx=3,ky=3)
 
 		# Create transition interpolator
-		self.criticalLineInterpolator = interp1d(self.rhoCrit['logT'],self.rhoCrit['logP'],kind='linear',bounds_error=False,fill_value=np.nan)
+		self.criticalLineInterpolator = interp1d(self.rhoCrit[0],self.rhoCrit[1],kind='linear',bounds_error=False,fill_value=np.nan)
 
 	def interpolateHe(self,temp,pressure):
 		"""
@@ -173,11 +167,11 @@ class scvh:
 		The return value will either be a one-dimensional vector (if all inputs are floats),
 		or an 2-dimensional vector (otherwise).
 		"""
-
 		temp, pressure = sanitizeInput(temp, pressure)
-		out = self.HeInterp(temp,pressure)
-		outMask = self.HeMaskInterp(temp,pressure)
-		out[outMask < 0.5] = np.nan # If the mask falls this low we are outside the grid.
+		out = [Interp(np.log10(temp),np.log10(pressure)) for Interp in self.HeInterp]
+		outMask = self.HeMaskInterp(np.log10(temp),np.log10(pressure))
+		for i in range(len(out)):
+			out[i][outMask < 0.5] = np.nan # If the mask falls this low we are outside the grid.
 
 		return out
 
@@ -198,9 +192,10 @@ class scvh:
 		"""
 
 		temp, pressure = sanitizeInput(temp, pressure)
-		out = self.HInterp(temp,pressure)
-		outMask = self.HMaskInterp(temp,pressure)
-		out[outMask < 0.5] = np.nan # If the mask falls this low we are outside the grid.
+		out = [Interp(np.log10(temp),np.log10(pressure)) for Interp in self.HInterp]
+		outMask = self.HMaskInterp(np.log10(temp),np.log10(pressure))
+		for i in range(len(out)):
+			out[i][outMask < 0.5] = np.nan # If the mask falls this low we are outside the grid.
 
 		return out
 
@@ -222,28 +217,39 @@ class scvh:
 		"""
 
 		temp, pressure = sanitizeInput(temp, pressure)
+
 		logT = np.log10(temp)
 		logP = np.log10(pressure)
-		out = self.interpolateSmoothedH(temp,pressure)
+
+		pcrit = self.criticalLineInterpolator(logT)
+		pcrit[logT>4.18] = 11.75
+
+		out = [Interp(logT,logP) for Interp in self.HInterp]
 
 		whereP1 = np.where((logT>4.18) & (logT>3.54) & (logT<4.82) & (logP>10.5) & (logP<14.1))
 		whereP2 = np.where((logT<=4.18) & (logT>3.54) & (logT<4.82) & (logP>10.5) & (logP<14.1))
-		outP1 = self.P1Interp(temp,pressure)
-		outP2 = self.P2Interp(temp,pressure)
-		outMask1 = self.P1MaskInterp(temp,pressure)
-		outMask2 = self.P2MaskInterp(temp,pressure)
-		outP1[outMask1 < 0.5] = np.nan # If the mask falls this low we are outside the grid.
-		outP2[outMask2 < 0.5] = np.nan # If the mask falls this low we are outside the grid.
-		pcrit = self.criticalLineInterpolator(np.log10(temp))
-		pcrit[logT>4.18] = 11.75
-		out[whereP1] = outP1[whereP1]
-		out[whereP2] = outP1[whereP2]
+
+		outP1 = [Interp(logT,logP) for Interp in self.P1Interp]
+		outP2 = [Interp(logT,logP) for Interp in self.P2Interp]
+
+		outMask1 = self.P1MaskInterp(logT,logP)
+		outMask2 = self.P2MaskInterp(logT,logP)
+
+		for i in range(len(out)):
+			outP1[i][outMask1 < 0.5] = np.nan # If the mask falls this low we are outside the grid.
+			outP2[i][outMask2 < 0.5] = np.nan # If the mask falls this low we are outside the grid.
+
+			out[i][whereP1] = outP1[i][whereP1]
+			out[i][whereP2] = outP1[i][whereP2]
+
 		return out
 
 
 
-
-
+s = scvh()
+print s.interpolateHe([1000,1200],[1e5,1e6])
+print s.interpolateSmoothedH([1000,1200],[1e5,1e6])
+print s.interpolateH([1000,1200],[1e5,1e6])
 
 
 
