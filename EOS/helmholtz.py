@@ -1,5 +1,3 @@
-import numpy as np
-
 """
 This is a python implementation of the interpolation and thermodynamics
 routines used in the helmholtz equation of state.
@@ -25,6 +23,8 @@ to assemble all temperature, density, atomic weight, and charge data into vector
 which may be passed to this routine, rather than calling it many times on individual
 points.
 """
+
+import numpy as np
 
 # Mathematical constants
 pi          = np.pi
@@ -179,7 +179,7 @@ class helm:
 	This class provides an object for storing and manipulating Helmholtz equation of state tables.
 	"""
 
-	def __init__(self,fname='helm_table.dat',logTmin=3.0,logTmax=13.0,\
+	def __init__(self,fname='SourceTables/helmholtz/helm_table.dat',logTmin=3.0,logTmax=13.0,\
 				logRhoMin=-12.0,logRhoMax=15.0,tRes=101,rhoRes=271):
 		"""
 		Arguments:
