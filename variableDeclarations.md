@@ -1,5 +1,13 @@
 - logT - Log10 of Temperature measured in Kelvin
 - logP - Log10 of Pressure measured in erg/cm^3
+- logRho - Log10 of Density measured in g/cm^3
+- logS - Log10 of Entropy measured in erg/g/K
+- logU - Log10 of Internal energy measured in erg/g
+- dLogRho/dLogT|P - Derivative of logRho with respect to logT, holding pressure fixed.
+- dLogRho/dLogP|T - Derivative of logRho with respect to logP, holding temperature fixed.
+- dLogS/dLogT|P - Derivative of logS with respect to logT, holding pressure fixed.
+- dLogS/dLogP|T - Derivative of logS with respect to logP, holding temperature fixed.
+- dLogT/dlogP|S - Derivative of logT with respect to logP, holding entropy fixed. Otherwise known as the adiabatic temperature gradient.
 - X(H) - Number fraction of atomic Hydrogen
 - X(H2) - Number fraction of molecular Hydrogen
 - X(He) - Number fraction of atomic Helium
