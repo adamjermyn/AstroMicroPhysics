@@ -15,7 +15,45 @@ import numpy as np
 from scipy.interpolate import interp1d
 from scipy.interpolate import RectBivariateSpline
 
+import sys
+sys.path.append('../')
+from sourceClass import *
+
 def readTables(fname):
+	"""
+	This function reads in any of the SCVH tables (other than the critical line table),
+	given the file name as an argument. It returns the table, the grid values of
+	log T (Temperature in K), and the grid values of log P (Pressure in erg/cm^3).
+	Missing entries are filled with NaN. The structure of the tables guarantees that
+	these entries are always grouped at the high-pressure end, and that for any
+	(T,P1) giving NaN, (T,P2>P1) gives NaN too.
+
+	The tables themselves are indexed first by T, then by P, and finally by the quantities
+	of interest. For hydrogen tables, this last column is given as:
+	0 - Number fraction of H2
+	1 - Number fraction of H
+	2 - Log(Density (g/cm^3))
+	3 - Log(Entropy (erg/K/g))
+	4 - Log(Internal energy (erg/g))
+	5 - dLogRho/dLogT|P
+	6 - dLogRho/dLogP|T
+	7 - dLogS/dLogT|P
+	8 - dLogS/dLogP|T
+	9 - dLogT/dLogP|S
+
+	For helium, they are:
+	0 - Number fraction of He
+	1 - Number fraction of He+ ions
+	2 - Log(Density (g/cm^3))
+	3 - Log(Entropy (erg/K/g))
+	4 - Log(Internal energy (erg/g))
+	5 - dLogRho/dLogT|P
+	6 - dLogRho/dLogP|T
+	7 - dLogS/dLogT|P
+	8 - dLogS/dLogP|T
+	9 - dLogT/dLogP|S
+
+	"""
 	logTvals = [] # Temperature gridpoints
 	logPvals = [] # Pressure gridpoints
 	hTable = [] # Hydrogen table
@@ -50,209 +88,81 @@ def readTables(fname):
 
 	return hTable,logTvals,logPvals
 
-def sanitizeInput(temp,pressure):
-	"""
-	This function takes mixed inputs, each of which is either a float or a one-dimensional
-	float numpy array, and returns both inputs as one-dimensional float numpy arrays.
+def makeSources(dirname):
+	# Read in the smoothed hydrogen EOS table and construct the source
+	hTable,logTvals,logPvals = readTables(dirname+'H_TAB_I.DAT')
+	outNames = ['X(H2)','X(H)','logRho','logS','logU','dLogRho/dLogT|P','dLogRho/dLogP|T','dLogS/dLogT|P','dLogS/dLogP|T','dLogT/dLogP|S']
+	smoothedH = source([logTvals,logPvals],['logT','logP'],outNames,hTable,linear=False)
 
-	Arguments:
-		temp 		- Temperature (K).
-		pressure  	- Pressure (erg/cm^3).	
-	"""
-	# Sanitize inputs so that only numpy arrays come in
+	# Read in the helium EOS table and construct the source
+	heTable,logTvals,logPvals = readTables(dirname+'HE_TAB_I.DAT')
+	outNames = ['X(He)','X(He+)','logRho','logS','logU','dLogRho/dLogT|P','dLogRho/dLogP|T','dLogS/dLogT|P','dLogS/dLogP|T','dLogT/dLogP|S']
+	He = source([logTvals,logPvals],['logT','logP'],outNames,heTable,linear=False)
 
-	if not hasattr(temp, "__len__"):
-		temp = [temp]
-	if not hasattr(pressure, "__len__"):
-		pressure = [pressure]
+	# Read in the hydrogen phase transition data
+	rhoCrit = np.transpose(np.loadtxt(dirname+'RHO_CRIT.DAT'))
 
-	temp = np.array(temp)
-	pressure = np.array(pressure)
+	# Read in the Phase 1 transition data
+	hTable1,logTvals1,logPvals1 = readTables(dirname+'H_TAB_P1.DAT')
+	outNames = ['X(H2)','X(H)','logRho','logS','logU','dLogRho/dLogT|P','dLogRho/dLogP|T','dLogS/dLogT|P','dLogS/dLogP|T','dLogT/dLogP|S']
 
-	maxLen = max(len(temp),len(pressure))
-	if maxLen > 1:
-		if len(temp) == 1:
-			temp = temp[0]*np.ones(maxLen)
-		if len(pressure) == 1:
-			pressure = pressure[0]*np.ones(maxLen)
+	# Read in the Phase 2 transition data
+	hTable2,logTvals2,logPvals2 = readTables(dirname+'H_TAB_P2.DAT')
+	outNames = ['X(H2)','X(H)','logRho','logS','logU','dLogRho/dLogT|P','dLogRho/dLogP|T','dLogS/dLogT|P','dLogS/dLogP|T','dLogT/dLogP|S']
 
-	return temp,pressure
+	# Create the binary masks for the phase transition
 
-class scvh:
+		# Create interpolator for the critical line
+	criticalLineInterpolator = interp1d(rhoCrit[0],rhoCrit[1],kind='linear',bounds_error=False,fill_value=np.nan)
+		# Interpolate the critical line in T for Phase 1
+	critP1 = criticalLineInterpolator(logTvals1)
+		# Zero-out the mask where it falls above the critical pressure
+	binaryMask1 = np.ones((len(logTvals1),len(logPvals1)))
+	for i in range(len(logTvals1)):
+		binaryMask1[i,logPvals1>critP1[i]] = 0
 
-	def __init__(self,dirname='SourceTables/SCVH/'):
-		self.dirname = dirname
+		# Interpolate the critical line in T for Phase 2
+	critP2 = criticalLineInterpolator(logTvals1)
+		# Zero-out the mask where it falls below the critical pressure
+	binaryMask2 = np.ones((len(logTvals2),len(logPvals2)))
+	for i in range(len(logTvals2)):
+		binaryMask2[i,logPvals2>critP2[i]] = 0
 
-		# Read in the hydrogen EOS table
-		hTable,logTvals,logPvals = readTables(dirname+'H_TAB_I.DAT')
+	# Create the transition sources
+	HP1 = source([logTvals1,logPvals1],['logT','logP'],outNames,hTable1,linear=False,binaryMask=binaryMask1,smoothingDist=7)
+	HP2 = source([logTvals2,logPvals2],['logT','logP'],outNames,hTable2,linear=False,binaryMask=binaryMask2,smoothingDist=7)
 
-		self.Hnames = ['XH2','XH','logRho','logS','logU','dLogRho/dLogT|P','dLogRho/dLogP|T','dLogS/dLogT|P','dLogS/dLogP|T','dLogT/dLogP|S']
-		self.hTables = np.copy(hTable)
-		self.hLogTvals = logTvals
-		self.hLogPvals = logPvals
+	return smoothedH,HP1,HP2,He
 
-		# Read in the helium EOS table
-		hTable,logTvals,logPvals = readTables(dirname+'HE_TAB_I.DAT')
+import matplotlib.pyplot as plt
 
-		self.HeNames = ['XHe','XHe+','logRho','logS','logU','dLogRho/dLogT|P','dLogRho/dLogP|T','dLogS/dLogT|P','dLogS/dLogP|T','dLogT/dLogP|S']
-		self.HeTables = np.copy(hTable)
-		self.HeLogTvals = logTvals
-		self.HeLogPvals = logPvals
-
-		# Read in the hydrogen phase transition data
-		rho_crit = np.transpose(np.loadtxt(dirname+'RHO_CRIT.DAT'))
-
-		self.critNames = ['logT','logP','logRho1','logRho2']		
-		self.rhoCrit = rho_crit
-
-		# Read in the Phase 1 transition data
-		hTable,logTvals,logPvals = readTables(dirname+'H_TAB_P1.DAT')
-
-		self.P1Tables = np.copy(hTable)
-		self.P1LogTvals = logTvals
-		self.P1LogPvals = logPvals
-
-		# Read in the Phase 2 transition data
-		hTable,logTvals,logPvals = readTables(dirname+'H_TAB_P2.DAT')
-
-		self.P2Tables = np.copy(hTable)
-		self.P2LogTvals = logTvals
-		self.P2LogPvals = logPvals
-
-		# Need to 
-
-		# Create interpolator for He
-		heMod = np.copy(self.HeTables)
-		heMod[np.isnan(heMod)] = 0 # Only okay because the NaN values appear on the edges
-		self.HeMask = 1-1.0*np.isnan(heMod[...,0])
-		self.HeInterp = [RectBivariateSpline(self.HeLogTvals,self.HeLogPvals,heMod[...,i],kx=3,ky=3) for i in range(heMod.shape[-1])]
-		self.HeMaskInterp = RectBivariateSpline(self.HeLogTvals,self.HeLogPvals,self.HeMask,kx=3,ky=3)
-
-		# Create interpolator for H
-		hMod = np.copy(self.hTables)
-		hMod[np.isnan(hMod)] = 0 # Only okay because the NaN values appear on the edges
-		self.HMask = 1-1.0*np.isnan(hMod[...,0])
-		self.HInterp = [RectBivariateSpline(self.hLogTvals,self.hLogPvals,hMod[...,i],kx=3,ky=3) for i in range(hMod.shape[-1])]
-		self.HMaskInterp = RectBivariateSpline(self.hLogTvals,self.hLogPvals,self.HMask,kx=3,ky=3)
-
-		# Create interpolator for H (Phase transition 1)
-		hMod = np.copy(self.P1Tables)
-		hMod[np.isnan(hMod)] = 0 # Only okay because the NaN values appear on the edges
-		self.P1Mask = 1-1.0*np.isnan(hMod[...,0])
-		self.P1Interp = [RectBivariateSpline(self.P1LogTvals,self.P1LogPvals,hMod[...,i],kx=3,ky=3) for i in range(hMod.shape[-1])]
-		self.P1MaskInterp = RectBivariateSpline(self.P1LogTvals,self.P1LogPvals,self.P1Mask,kx=3,ky=3)
-
-		# Create interpolator for H (Phase transition 2)
-		hMod = np.copy(self.P2Tables)
-		hMod[np.isnan(hMod)] = 0 # Only okay because the NaN values appear on the edges
-		self.P2Mask = 1-1.0*np.isnan(hMod[...,0])
-		self.P2Interp = [RectBivariateSpline(self.P2LogTvals,self.P2LogPvals,hMod[...,i],kx=3,ky=3) for i in range(hMod.shape[-1])]
-		self.P2MaskInterp = RectBivariateSpline(self.P2LogTvals,self.P2LogPvals,self.P2Mask,kx=3,ky=3)
-
-		# Create transition interpolator
-		self.criticalLineInterpolator = interp1d(self.rhoCrit[0],self.rhoCrit[1],kind='linear',bounds_error=False,fill_value=np.nan)
-
-	def interpolateHe(self,temp,pressure):
-		"""
-		Computes the equation of state for He and returns the various thermodynamic quantities.
-
-		Arguments:
-		temp 		- Temperature (K).
-		pressure  	- Pressure (erg/cm^3).
-
-		TODO: Document outputs
-
-		All arguments should either be floats or 1-dimensional numpy arrays. Mixed inputs
-		between floats and arrays are allowed so long as each array present has the same length.
-		The return value will either be a one-dimensional vector (if all inputs are floats),
-		or an 2-dimensional vector (otherwise).
-		"""
-		temp, pressure = sanitizeInput(temp, pressure)
-		out = [Interp(np.log10(temp),np.log10(pressure)) for Interp in self.HeInterp]
-		outMask = self.HeMaskInterp(np.log10(temp),np.log10(pressure))
-		for i in range(len(out)):
-			out[i][outMask < 0.5] = np.nan # If the mask falls this low we are outside the grid.
-
-		return out
-
-	def interpolateSmoothedH(self,temp,pressure):
-		"""
-		Computes the transition-smoothed equation of state for H and returns the various thermodynamic quantities.
-
-		Arguments:
-		temp 		- Temperature (K).
-		pressure  	- Pressure (erg/cm^3).
-
-		TODO: Document outputs
-
-		All arguments should either be floats or 1-dimensional numpy arrays. Mixed inputs
-		between floats and arrays are allowed so long as each array present has the same length.
-		The return value will either be a one-dimensional vector (if all inputs are floats),
-		or an 2-dimensional vector (otherwise).
-		"""
-
-		temp, pressure = sanitizeInput(temp, pressure)
-		out = [Interp(np.log10(temp),np.log10(pressure)) for Interp in self.HInterp]
-		outMask = self.HMaskInterp(np.log10(temp),np.log10(pressure))
-		for i in range(len(out)):
-			out[i][outMask < 0.5] = np.nan # If the mask falls this low we are outside the grid.
-
-		return out
-
-	def interpolateH(self,temp,pressure):
-		"""
-		Computes the equation of state for H including the plasma phase transition
-		and returns the various thermodynamic quantities.
-
-		Arguments:
-		temp 		- Temperature (K).
-		pressure  	- Pressure (erg/cm^3).
-
-		TODO: Document outputs
-
-		All arguments should either be floats or 1-dimensional numpy arrays. Mixed inputs
-		between floats and arrays are allowed so long as each array present has the same length.
-		The return value will either be a one-dimensional vector (if all inputs are floats),
-		or an 2-dimensional vector (otherwise).
-		"""
-
-		temp, pressure = sanitizeInput(temp, pressure)
-
-		logT = np.log10(temp)
-		logP = np.log10(pressure)
-
-		pcrit = self.criticalLineInterpolator(logT)
-		pcrit[logT>4.18] = 11.75
-
-		out = [Interp(logT,logP) for Interp in self.HInterp]
-
-		whereP1 = np.where((logT>4.18) & (logT>3.54) & (logT<4.82) & (logP>10.5) & (logP<14.1))
-		whereP2 = np.where((logT<=4.18) & (logT>3.54) & (logT<4.82) & (logP>10.5) & (logP<14.1))
-
-		outP1 = [Interp(logT,logP) for Interp in self.P1Interp]
-		outP2 = [Interp(logT,logP) for Interp in self.P2Interp]
-
-		outMask1 = self.P1MaskInterp(logT,logP)
-		outMask2 = self.P2MaskInterp(logT,logP)
-
-		for i in range(len(out)):
-			outP1[i][outMask1 < 0.5] = np.nan # If the mask falls this low we are outside the grid.
-			outP2[i][outMask2 < 0.5] = np.nan # If the mask falls this low we are outside the grid.
-
-			out[i][whereP1] = outP1[i][whereP1]
-			out[i][whereP2] = outP1[i][whereP2]
-
-		return out
-
-
-
-s = scvh()
-print s.interpolateHe([1000,1200],[1e5,1e6])
-print s.interpolateSmoothedH([1000,1200],[1e5,1e6])
-print s.interpolateH([1000,1200],[1e5,1e6])
-
-
-
-
-
+smoothedH,HP1,HP2,He = makeSources('SourceTables/SCVH/')
+t = np.linspace(min(smoothedH.grid[0]),max(smoothedH.grid[0]),num=100,endpoint=True)
+p = np.linspace(min(smoothedH.grid[1]),max(smoothedH.grid[1]),num=100,endpoint=True)
+t,p = np.meshgrid(t,p)
+t = t.flatten()
+p = p.flatten()
+data = overlapNamedSources([HP1,HP2,He],np.transpose(np.array([t,p])),'logRho')
+data = np.reshape(data,(100,100))
+plt.subplot(221)
+plt.imshow(data,extent=[min(smoothedH.grid[0]),max(smoothedH.grid[0]),min(smoothedH.grid[1]),max(smoothedH.grid[1])],origin='lower',aspect=0.4)
+plt.xlabel('log T')
+plt.ylabel('log P')
+plt.colorbar()
+plt.subplot(222)
+data = overlapNamedSources([HP1,HP2,He],np.transpose(np.array([t,p])),'logRho',weights=np.array([10,10,1]))
+data = np.reshape(data,(100,100))
+plt.imshow(data,extent=[min(smoothedH.grid[0]),max(smoothedH.grid[0]),min(smoothedH.grid[1]),max(smoothedH.grid[1])],origin='lower',aspect=0.4)
+plt.xlabel('log T')
+plt.ylabel('log P')
+plt.colorbar()
+plt.subplot(223)
+data = overlapNamedSources([HP1,HP2,He],np.transpose(np.array([t,p])),'logRho',weights=np.array([0,0,1]))
+data = np.reshape(data,(100,100))
+plt.imshow(data,extent=[min(smoothedH.grid[0]),max(smoothedH.grid[0]),min(smoothedH.grid[1]),max(smoothedH.grid[1])],origin='lower',aspect=0.4)
+plt.xlabel('log T')
+plt.ylabel('log P')
+plt.colorbar()
+plt.show()
+exit()
 
