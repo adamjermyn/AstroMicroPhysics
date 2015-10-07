@@ -1,0 +1,6 @@
+- logT - Log10 of Temperature measured in Kelvin
+- logP - Log10 of Pressure measured in erg/cm^3
+- X(H) - Number fraction of atomic Hydrogen
+- X(H2) - Number fraction of molecular Hydrogen
+- X(He) - Number fraction of atomic Helium
+- X(He+) - Number fraction of singly ionized Helium
