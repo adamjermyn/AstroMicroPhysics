@@ -91,12 +91,12 @@ def readTables(fname):
 def makeSources(dirname='SourceTables/SCVH/'):
 	# Read in the smoothed hydrogen EOS table and construct the source
 	hTable,logTvals,logPvals = readTables(dirname+'H_TAB_I.DAT')
-	outNames = ['X(H2)','X(H)','logRho','logS','logU','dLogRho/dLogT|P','dLogRho/dLogP|T','dLogS/dLogT|P','dLogS/dLogP|T','dLogT/dLogP|S']
+	outNames = ['X(H2)','X(H)','logRho','logS','logE','dLogRho/dLogT|P','dLogRho/dLogP|T','dLogS/dLogT|P','dLogS/dLogP|T','dLogT/dLogP|S']
 	smoothedH = source([logTvals,logPvals],['logT','logP'],outNames,hTable,linear=False)
 
 	# Read in the helium EOS table and construct the source
 	heTable,logTvals,logPvals = readTables(dirname+'HE_TAB_I.DAT')
-	outNames = ['X(He)','X(He+)','logRho','logS','logU','dLogRho/dLogT|P','dLogRho/dLogP|T','dLogS/dLogT|P','dLogS/dLogP|T','dLogT/dLogP|S']
+	outNames = ['X(He)','X(He+)','logRho','logS','logE','dLogRho/dLogT|P','dLogRho/dLogP|T','dLogS/dLogT|P','dLogS/dLogP|T','dLogT/dLogP|S']
 	He = source([logTvals,logPvals],['logT','logP'],outNames,heTable,linear=False)
 
 	# Read in the hydrogen phase transition data
@@ -104,11 +104,11 @@ def makeSources(dirname='SourceTables/SCVH/'):
 
 	# Read in the Phase 1 transition data
 	hTable1,logTvals1,logPvals1 = readTables(dirname+'H_TAB_P1.DAT')
-	outNames = ['X(H2)','X(H)','logRho','logS','logU','dLogRho/dLogT|P','dLogRho/dLogP|T','dLogS/dLogT|P','dLogS/dLogP|T','dLogT/dLogP|S']
+	outNames = ['X(H2)','X(H)','logRho','logS','logE','dLogRho/dLogT|P','dLogRho/dLogP|T','dLogS/dLogT|P','dLogS/dLogP|T','dLogT/dLogP|S']
 
 	# Read in the Phase 2 transition data
 	hTable2,logTvals2,logPvals2 = readTables(dirname+'H_TAB_P2.DAT')
-	outNames = ['X(H2)','X(H)','logRho','logS','logU','dLogRho/dLogT|P','dLogRho/dLogP|T','dLogS/dLogT|P','dLogS/dLogP|T','dLogT/dLogP|S']
+	outNames = ['X(H2)','X(H)','logRho','logS','logE','dLogRho/dLogT|P','dLogRho/dLogP|T','dLogS/dLogT|P','dLogS/dLogP|T','dLogT/dLogP|S']
 
 	# Create the binary masks for the phase transition
 
@@ -133,37 +133,4 @@ def makeSources(dirname='SourceTables/SCVH/'):
 	HP2 = source([logTvals2,logPvals2],['logT','logP'],outNames,hTable2,linear=False,binaryMask=binaryMask2,smoothingDist=7)
 
 	return smoothedH,HP1,HP2,He
-
-def test():
-	import matplotlib.pyplot as plt
-
-	smoothedH,HP1,HP2,He = makeSources('SourceTables/SCVH/')
-	t = np.linspace(min(smoothedH.grid[0]),max(smoothedH.grid[0]),num=100,endpoint=True)
-	p = np.linspace(min(smoothedH.grid[1]),max(smoothedH.grid[1]),num=100,endpoint=True)
-	t,p = np.meshgrid(t,p)
-	t = t.flatten()
-	p = p.flatten()
-	data = overlapNamedSources([HP1,HP2,He],np.transpose(np.array([t,p])),'logRho')
-	data = np.reshape(data,(100,100))
-	plt.subplot(221)
-	plt.imshow(data,extent=[min(smoothedH.grid[0]),max(smoothedH.grid[0]),min(smoothedH.grid[1]),max(smoothedH.grid[1])],origin='lower',aspect=0.4)
-	plt.xlabel('log T')
-	plt.ylabel('log P')
-	plt.colorbar()
-	plt.subplot(222)
-	data = overlapNamedSources([HP1,HP2,He],np.transpose(np.array([t,p])),'logRho',weights=np.array([10,10,1]))
-	data = np.reshape(data,(100,100))
-	plt.imshow(data,extent=[min(smoothedH.grid[0]),max(smoothedH.grid[0]),min(smoothedH.grid[1]),max(smoothedH.grid[1])],origin='lower',aspect=0.4)
-	plt.xlabel('log T')
-	plt.ylabel('log P')
-	plt.colorbar()
-	plt.subplot(223)
-	data = overlapNamedSources([HP1,HP2,He],np.transpose(np.array([t,p])),'logRho',weights=np.array([0,0,1]))
-	data = np.reshape(data,(100,100))
-	plt.imshow(data,extent=[min(smoothedH.grid[0]),max(smoothedH.grid[0]),min(smoothedH.grid[1]),max(smoothedH.grid[1])],origin='lower',aspect=0.4)
-	plt.xlabel('log T')
-	plt.ylabel('log P')
-	plt.colorbar()
-	plt.show()
-	exit()
 

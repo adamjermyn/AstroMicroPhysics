@@ -1,14 +1,137 @@
-- logT - Log10 of Temperature measured in Kelvin
-- logP - Log10 of Pressure measured in erg/cm^3
-- logRho - Log10 of Density measured in g/cm^3
-- logS - Log10 of Entropy measured in erg/g/K
-- logU - Log10 of Internal energy measured in erg/g
+- T - Temperature measured in Kelvin
+- logT - Log10 of temperature measured in Kelvin
+- Rho - Density measured in g/cm^3
+- logRho - Log10 of density measured in g/cm^3
+- P - Pressure measured in erg/cm^3
+- logP - Log10 of pressure measured in erg/cm^3
+- Pgas - Gas pressure measured in erg/cm^3
+- Prad - Radiation pressure measured in erg/cm^3
+- Pion - Ion pressure measured in erg/cm^3
+- Pele - Electron pressure measured in erg/cm^3
+- Ppos - Positron pressure measured in erg/cm^3
+- Pep - Electron+Positron pressure measured in erg/cm^3 (Note: Never appears separately, but its derivatives do)
+- Pcoul - Pressure contribution of the coulomb interaction measured in erg/cm^3
+- E - Internal energy measured in erg/g
+- logE - Log10 of Internal energy measured in erg/g
+- Egas - Internal energy due to gas measured in erg/g
+- Erad - Internal energy due to radiation measured in erg/g
+- Eion - Internal energy due to ions measured in erg/g
+- Eele - Internal energy due to electrons measured in erg/g
+- Epos - Internal energy due to positrons measured in erg/g
+- Eep - Internal energy due to electrons and positrons measured in erg/g (Note: Never appears separately, but its derivatives do)
+- Ecoul - Energy contribution of the coulomb interaction measured in erg/g
+- S - Entropy measured in erg/g/K
+- logS - Log10 of entropy measured in erg/g/K
+- Srad - Entropy contribution from radiation measured in erg/g/K
+- Sion - Entropy contribution from ions measured in erg/g/K
+- Sele - Entropy contribution fron electrons measured in erg/g/K
+- Spos - Entropy contribution from positrons measured in erg/g/K
+- Sep - Entropy contribution from electrons and positrons measured in erg/g/K (Note: Never appears separately, but its derivatives do)
+- Scoul - Entropy contribution from coulomb interactions measured in erg/g/K
+- Abar - Average atomic weight, measured in proton masses
+- Zbar - Average proton number among the isotopes present
+- dP/dT|Rho - Derivative of pressure with respect to temperature holding density fixed, measured in erg/cm^3/K
+- dP/dRho|T - Derivative of pressure with respect to density holding temperature fixed, measured in erg/g
+- dP/dA - Derivative of pressure with respect to Abar in erg/cm^3
+- dP/dZ - Derivative of pressure with respect to Zbar in erg/cm^3
+- dPgas/dT|Rho - Derivative of gas pressure with respect to temperature holding density fixed, measured in erg/cm^3/K
+- dPgas/dRho|T - Derivative of gas pressure with respect to density holding temperature fixed, measured in erg/g
+- dPgas/dA - Derivative of gas pressure with respect to Abar in erg/cm^3
+- dPgas/dZ - Derivative of gas pressure with respect to Zbar in erg/cm^3
+- dPrad/dT|Rho - Derivative of radiation pressure with respect to temperature holding density fixed, measured in erg/cm^3/K
+- dPrad/dRho|T - Derivative of radiation pressure with respect to density holding temperature fixed, measured in erg/g
+- dPrad/dA - Derivative of radiation pressure with respect to Abar in erg/cm^3
+- dPrad/dZ - Derivative of radiation pressure with respect to Zbar in erg/cm^3
+- dPion/dT|Rho - Derivative of ion pressure with respect to temperature holding density fixed, measured in erg/cm^3/K
+- dPion/dRho|T - Derivative of ion pressure with respect to density holding temperature fixed, measured in erg/g
+- dPion/dA - Derivative of ion pressure with respect to Abar in erg/cm^3
+- dPion/dZ - Derivative of ion pressure with respect to Zbar in erg/cm^3
+- dPep/dT|Rho - Derivative of electron positron pressure with respect to temperature holding density fixed, measured in erg/cm^3/K
+- dPep/dRho|T - Derivative of electron positron pressure with respect to density holding temperature fixed, measured in erg/g
+- dPep/dA - Derivative of electron positron pressure with respect to Abar in erg/cm^3
+- dPep/dZ - Derivative of electron positron pressure with respect to Zbar in erg/cm^3
+- dPcoul/dT|Rho - Derivative of Pcoul with respect to T, holding density fixed, in erg/g/K
+- dPcoul/dRho|T - Derivative of Pcoul with respect to density, holding T fixed, in erg*cm^3/g^2
+- dPcoul/dA - Derivative of Pcoul with respect to Abar in erg/g
+- dPcoul/dZ - Derivative of Pcoul with respect to Zbar in erg/g
+- dE/dT|Rho - Derivative of energy with respect to temperature holding density fixed, measured in erg/g/K
+- dE/dRho|T - Derivative of energy with respect to density holding temperature fixed, measured in erg*cm^3/g^2
+- dE/dA - Derivative of energy with respect to Abar in erg/g
+- dE/dZ - Derivative of energy with respect to Zbar in erg/g
+- dEgas/dT|Rho - Derivative of gas energy with respect to temperature holding density fixed, measured in erg/g/K
+- dEgas/dRho|T - Derivative of gas energy with respect to density holding temperature fixed, measured in erg*cm^3/g^2
+- dEgas/dA - Derivative of gas energy with respect to Abar in erg/g
+- dEgas/dZ - Derivative of gas energy with respect to Zbar in erg/g
+- dErad/dT|Rho - Derivative of radiation energy with respect to temperature holding density fixed, measured in erg/g/K
+- dErad/dRho|T - Derivative of radiation energy with respect to density holding temperature fixed, measured in erg*cm^3/g^2
+- dErad/dA - Derivative of radiation energy with respect to Abar in erg/g
+- dErad/dZ - Derivative of radiation energy with respect to Zbar in erg/g
+- dEion/dT|Rho - Derivative of ion energy with respect to temperature holding density fixed, measured in erg/g/K
+- dEion/dRho|T - Derivative of ion energy with respect to density holding temperature fixed, measured in erg*cm^3/g^2
+- dEion/dA - Derivative of ion energy with respect to Abar in erg/g
+- dEion/dZ - Derivative of ion energy with respect to Zbar in erg/g
+- dEep/dT|Rho - Derivative of electron positron energy with respect to temperature holding density fixed, measured in erg/g/K
+- dEep/dRho|T - Derivative of electron positron energy with respect to density holding temperature fixed, measured in erg*cm^3/g^2
+- dEep/dA - Derivative of electron positron energy with respect to Abar in erg/g
+- dEep/dZ - Derivative of electron positron energy with respect to Zbar in erg/g
+- dEcoul/dT|Rho - Derivative of Ecoul with respect to T, holding density fixed, in erg/g/K
+- dEcoul/dRho|T - Derivative of Ecoul with respect to density, holding T fixed, in erg*cm^3/g^2
+- dEcoul/dA - Derivative of Ecoul with respect to Abar in erg/g
+- dEcoul/dZ - Derivative of Ecoul with respect to Zbar in erg/g
+- dS/dT|Rho - Derivative of entropy with respect to temperature holding density fixed, measured in erg/g/K^2
+- dS/dRho|T - Derivative of entropy with respect to density holding temperature fixed, measured in erg*cm^3/g^2/K
+- dS/dA - Derivative of entropy with respect to Abar in erg/g/K
+- dS/dZ - Derivative of entropy with respect to Zbar in erg/g/K
+- dSrad/dT|Rho - Derivative of radiation entropy with respect to temperature holding density fixed, measured in erg/g/K^2
+- dSrad/dRho|T - Derivative of radiation entropy with respect to density holding temperature fixed, measured in erg*cm^3/g^2/K
+- dSrad/dA - Derivative of radiation entropy with respect to Abar in erg/g/K
+- dSrad/dZ - Derivative of radiation entropy with respect to Zbar in erg/g/K
+- dSion/dT|Rho - Derivative of ion entropy with respect to temperature holding density fixed, measured in erg/g/K^2
+- dSion/dRho|T - Derivative of ion entropy with respect to density holding temperature fixed, measured in erg*cm^3/g^2/K
+- dSion/dA - Derivative of ion entropy with respect to Abar in erg/g/K
+- dSion/dZ - Derivative of ion entropy with respect to Zbar in erg/g/K
+- dSep/dT|Rho - Derivative of electron positron entropy with respect to temperature holding density fixed, measured in erg/g/K^2
+- dSep/dRho|T - Derivative of electron positron entropy with respect to density holding temperature fixed, measured in erg*cm^3/g^2/K
+- dSep/dA - Derivative of electron positron entropy with respect to Abar in erg/g/K
+- dSep/dZ - Derivative of electron positron entropy with respect to Zbar in erg/g/K
+- dScoul/dT|Rho - Derivative of coulomb entropy with respect to temperature holding density fixed, measured in erg/g/K^2
+- dScoul/dRho|T - Derivative of coulomb entropy with respect to density holding temperature fixed, measured in erg*cm^3/g^2/K
+- dScoul/dA - Derivative of coulomb entropy with respect to Abar measured in erg/g/K
+- dScoul/dZ - Derivative of coulomb entropy with respect to Zbar measured in erg/g/K- Xni - ?
+- dEta/dT|Rho - Derivative of Eta with respect to T, holding density fixed, in erg/g/K
+- dEta/dRho|T - Derivative of Eta with respect to density, holding T fixed, in erg*cm^3/g^2
+- dEta/dA - Derivative of Etaele with respect to Abar in erg/g
+- dEta/dZ - Derivative of Etaele with respect to Zbar in erg/g
+- X(H) - Number fraction of atomic Hydrogen
+- X(H2) - Number fraction of molecular Hydrogen
+- X(He) - Number fraction of atomic Helium
+- X(He+) - Number fraction of singly ionized Helium
+- CV - Specific heat at constant volume measured in erg/g/K
+- CP - Specific heat at constant pressure measured in erg/g/K
+- gamma1 - Adiabatic constant gamma 1 (dimensionless)
+- gamma2 - Adiabatic constant gamma 2 (dimensionless)
+- gamma3 - Adiabatic constant gamma 3 (dimensionless)
+- vs - Adiabatic sound speed
+- CVgas - Specific heat at constant volume measured in erg/g/K
+- CPgas - Specific heat at constant pressure measured in erg/g/K
+- gamma1gas - Adiabatic constant gamma 1 (dimensionless)
+- gamma2gas - Adiabatic constant gamma 2 (dimensionless)
+- gamma3gas - Adiabatic constant gamma 3 (dimensionless)
+- vsGas - Adiabatic sound speed
 - dLogRho/dLogT|P - Derivative of logRho with respect to logT, holding pressure fixed.
 - dLogRho/dLogP|T - Derivative of logRho with respect to logP, holding temperature fixed.
 - dLogS/dLogT|P - Derivative of logS with respect to logT, holding pressure fixed.
 - dLogS/dLogP|T - Derivative of logS with respect to logP, holding temperature fixed.
 - dLogT/dlogP|S - Derivative of logT with respect to logP, holding entropy fixed. Otherwise known as the adiabatic temperature gradient.
-- X(H) - Number fraction of atomic Hydrogen
-- X(H2) - Number fraction of molecular Hydrogen
-- X(He) - Number fraction of atomic Helium
-- X(He+) - Number fraction of singly ionized Helium
+- dLogT/dlogPgas|S - Derivative of logT with respect to logPgas, holding entropy fixed. Otherwise known as the gas adiabatic temperature gradient.
+
+- Xnem - ?
+- Xnefer - ?
+- Xne - ?
+- PlasG - ?
+- dSe - ?
+- dPe - ?
+- dSp - ?
+- 'dXne/dT|Rho','dXne/dRho|T','dXne/dA','dXne/dZ','Xnp',
+- Etaele - Electron chemical potential measured in eV
+- Etapos - Positron chemical potential measured in eV

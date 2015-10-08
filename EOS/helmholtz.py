@@ -270,24 +270,20 @@ class helm:
 		self.dRho2Inverse = 1./self.dRho2
 		self.dRho3Inverse = 1./self.dRho3
 
-		# Return names
-		self.retNames = ['pres','dpresdt','dpresdd','dpresda','dpresdz','ener','denerdt',\
-						'denerdd','denerda','denerdz','entr','dentrdt','dentrdd','dentrda',\
-						'dentrdz','pgas','dpgasdt','dpgasdd','dpgasda','dpgasdz','egas','degasdt',\
-						'degasdd','degasda','degasdz','prad','dpraddt','dpraddd','dpradda','dpraddz',\
-						'erad','deraddt','deraddd','deradda','deraddz','srad','dsraddt','dsraddd',\
-						'dsradda','dsraddz','pion','dpiondt','dpiondd','dpionda','dpiondz','eion',\
-						'deiondt','deiondd','deionda','deiondz','sion','dsiondt','dsiondd','dsionda',\
-						'dsiondz','xni','pele','ppos','dpepdt','dpepdd','dpepda',\
-						'dpepdz','eele','epos','deepdt','deepdd','deepda','deepdz',\
-						'sele','spos','dsepdt','dsepdd','dsepda','dsepdz','xnem','xnefer',\
-						'dxnedt','dxnedd','dxneda','dxnedz','xnp','zbar','etaele',\
-						'detadt','detadd','detada','detadz','etapos','pcoul','dpcouldt',\
-						'dpcouldd','dpcoulda','dpcouldz','ecoul','decouldt','decouldd','decoulda',\
-						'decouldz','scoul','dscouldt','dscouldd','dscoulda','dscouldz','plasg','dse','dpe',\
-						'dsp','cv_gas','cp_gas','gam1_gas','gam2_gas','gam3_gas','nabad_gas','sound_gas',\
-						'cv','cp','gam1','gam2','gam3','nabad','sound']
-
+		# Return names - These are left unchanged from the original fortran code to make it easier to read this code.
+		# The filtered method takes (and defines) a specific subset of these needed for most stellar codes.
+		self.outNames = ['P','dP/dT|Rho','dP/dRho|T','dP/dA','dP/dZ','E','dE/dT|Rho','dE/dRho|T','dE/dA','dE/dZ','S','dS/dT|Rho',\
+						 'dS/dRho|T','dS/dA','dS/dZ','Pgas','dPgas/dT|Rho','dPgas/dRho|T','dPgas/dA','dPgas/dZ','Egas','dEgas/dT|Rho',\
+						 'dEgas/dRho|T','dEgas/dA','dEgas/dZ','Prad','dPrad/dT|Rho','dPrad/dRho|T','dPrad/dA','dPrad/dZ','Erad',\
+						 'dErad/dT|Rho','dErad/dRho|T','dErad/dA','dErad/dZ','Srad','dSrad/dT|Rho','dSrad/dRho|T','dSrad/dA','dSrad/dZ',\
+						 'Pion','dPion/dT|Rho','dPion/dRho|T','dPion/dA','dPion/dZ','Eion','dEion/dT|Rho','dEion/dRho|T','dEion/dA',\
+						 'dEion/dZ','Sion','dSion/dT|Rho','dSion/dRho|T','dSion/dA','dSion/dZ','Xni','Pele','Ppos','dPep/dT|Rho','dPep/dRho|T',\
+						 'dPep/dA','dPep/dZ','Eele','Epos','dEep/dT|Rho','dEep/dRho|T','dEep/dA','dEep/dZ','Sele','Spos','dSep/dT|Rho','dSep/dT|Rho',\
+						 'dSep/dA','dSep/dZ','Xnem','Xnefer','dXne/dT|Rho','dXne/dRho|T','dXne/dA','dXne/dZ','Xnp','Zbar','Etaele','dEta/dT|Rho',\
+						 'dEta/dRho|T','dEta/dA','dEta/dZ','Etapos','Pcoul','dPcoul/dT|Rho','dPcoul/dRho|T','dPcoul/dA','dPcoul/dZ','Ecoul',\
+						 'dEcoul/dT|Rho','dEcoul/dRho|T','dEcoul/dA','dEcoul/dZ','Scoul','dScoul/dT|Rho','dScoul/dRho|T','dScoul/dA','dScoul/dZ',\
+						 'PlasG','dSe','dPe','dSp','CVgas','CPgas','gamma1gas','gamma2gas','gamma3gas','dLogT/dlogPgas|S','vsGas','CV','CP','gamma1',\
+						 'gamma2','gamma3','dLogT/dlogP|S','vs']
 
 	def eos(self,temp,den,abar,zbar):
 		"""
@@ -299,13 +295,12 @@ class helm:
 		abar - Average atomic weight (in proton masses).
 		zion - Average Z among the isotopes present.
 
-
-		TODO: Document outputs
+		The output of this method is a dictionary, the values of which are one-dimensional numpy arrays.
+		The keys are in self.outNames, and the corresponding definitions are given in the variable declarations file.
 
 		All arguments should either be floats or 1-dimensional numpy arrays. Mixed inputs
 		between floats and arrays are allowed so long as each array present has the same length.
-		The return value will either be a one-dimensional vector (if all inputs are floats),
-		or an 2-dimensional vector (otherwise).
+		The return value will either be a 2-dimensional vector.
 		"""
 
 		# Sanitize inputs so that only numpy arrays come in
@@ -826,46 +821,5 @@ class helm:
 
 		ret[:,nanLocs] = np.nan # Set outputs corresponding to bad input locations to NaN
 
-		return {a:b for a,b in zip(*(self.retNames,ret))}
-
-
-h = helm()
-
-t = 10**np.linspace(2.,14.,num=100,endpoint=True)
-r = 10**np.linspace(-14.,14.,num=100,endpoint=True)
-t,r = np.meshgrid(t,r)
-t = t.flatten()
-r = r.flatten()
-a,z = azHelper()
-out = h.eos(t,r,a,z)['pres']
-out = np.reshape(out,(100,100))
-print out[::10,::10]
-out = np.log10(out)
-import matplotlib.pyplot as plt
-plt.imshow(out,extent=[2,14,-14,14],origin='lower')
-plt.colorbar()
-plt.show()
-exit()
-
-
-
-n = 10000
-temps = 1e6*np.random.rand(n)
-rhos = 1e-6*np.random.rand(n)
-a,z = azHelper()
-
-import time
-
-start = time.time()
-out = h.eos(temps,rhos,a,z)
-end = time.time()
-print (end - start)/n
-
-start = time.time()
-for i in range(n):
-	out = h.eos(temps[i],rhos[i],a,z)
-end = time.time()
-print (end - start)/n
-
-
+		return {a:b for a,b in zip(*(self.outNames,ret))}
 
