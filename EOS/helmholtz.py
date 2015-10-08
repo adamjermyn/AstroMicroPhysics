@@ -222,7 +222,7 @@ class helm:
 		# Read the Helmholtz free energy and its derivatives
 		for j in range(len(self.tRan)):
 			for i in range(len(self.rhoRan)):
-				s = fi.readline().rstrip('\n')[3:].split(' ')
+				s = fi.readline().rstrip('\n')[2:].split(' ')
 				s = [float(a) for a in s if a!='' and a!='\n']
 				for k in range(9):
 					tables[self.names[k]][i,j] = s[k]
@@ -230,7 +230,7 @@ class helm:
 		# Read the pressure derivative with density
 		for j in range(len(self.tRan)):
 			for i in range(len(self.rhoRan)):
-				s = fi.readline().rstrip('\n')[3:].split(' ')
+				s = fi.readline().rstrip('\n')[2:].split(' ')
 				s = [a for a in s if a!='' and a!='\n']
 				for k in range(4):
 					tables[self.names[9+k]][i,j] = s[k]
@@ -238,7 +238,7 @@ class helm:
 		# Read the electron chemical potentials
 		for j in range(len(self.tRan)):
 			for i in range(len(self.rhoRan)):
-				s = fi.readline().rstrip('\n')[3:].split(' ')
+				s = fi.readline().rstrip('\n')[2:].split(' ')
 				s = [a for a in s if a!='' and a!='\n']
 				for k in range(4):
 					tables[self.names[13+k]][i,j] = s[k]
@@ -246,7 +246,7 @@ class helm:
 		# Read the nuclear densities
 		for j in range(len(self.tRan)):
 			for i in range(len(self.rhoRan)):
-				s = fi.readline().rstrip('\n')[3:].split(' ')
+				s = fi.readline().rstrip('\n')[2:].split(' ')
 				s = [a for a in s if a!='' and a!='\n']
 				for k in range(4):
 					tables[self.names[17+k]][i,j] = s[k]
@@ -824,12 +824,30 @@ class helm:
 						dsp,cv_gas,cp_gas,gam1_gas,gam2_gas,gam3_gas,nabad_gas,sound_gas,\
 						cv,cp,gam1,gam2,gam3,nabad,sound])
 
-#		ret[:,nanLocs] = np.nan # Set outputs corresponding to bad input locations to NaN
+		ret[:,nanLocs] = np.nan # Set outputs corresponding to bad input locations to NaN
 
 		return {a:b for a,b in zip(*(self.retNames,ret))}
 
 
 h = helm()
+
+t = 10**np.linspace(2.,14.,num=100,endpoint=True)
+r = 10**np.linspace(-14.,14.,num=100,endpoint=True)
+t,r = np.meshgrid(t,r)
+t = t.flatten()
+r = r.flatten()
+a,z = azHelper()
+out = h.eos(t,r,a,z)['pres']
+out = np.reshape(out,(100,100))
+print out[::10,::10]
+out = np.log10(out)
+import matplotlib.pyplot as plt
+plt.imshow(out,extent=[2,14,-14,14],origin='lower')
+plt.colorbar()
+plt.show()
+exit()
+
+
 
 n = 10000
 temps = 1e6*np.random.rand(n)
