@@ -282,7 +282,7 @@ class helm:
 						 'dSep/dA','dSep/dZ','Xnem','Xnefer','dXne/dT|Rho','dXne/dRho|T','dXne/dA','dXne/dZ','Xnp','Zbar','Etaele','dEta/dT|Rho',\
 						 'dEta/dRho|T','dEta/dA','dEta/dZ','Etapos','Pcoul','dPcoul/dT|Rho','dPcoul/dRho|T','dPcoul/dA','dPcoul/dZ','Ecoul',\
 						 'dEcoul/dT|Rho','dEcoul/dRho|T','dEcoul/dA','dEcoul/dZ','Scoul','dScoul/dT|Rho','dScoul/dRho|T','dScoul/dA','dScoul/dZ',\
-						 'PlasG','dSe','dPe','dSp','CVgas','CPgas','gamma1gas','gamma2gas','gamma3gas','dLogT/dlogPgas|S','vsGas','CV','CP','gamma1',\
+						 'PlasGamma','dSe','dPe','dSp','CVgas','CPgas','gamma1gas','gamma2gas','gamma3gas','dLogT/dlogPgas|S','vsGas','CV','CP','gamma1',\
 						 'gamma2','gamma3','dLogT/dlogP|S','vs']
 
 	def eos(self,temp,den,abar,zbar):

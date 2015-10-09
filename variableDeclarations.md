@@ -30,6 +30,8 @@
 - Scoul - Entropy contribution from coulomb interactions measured in erg/g/K
 - Abar - Average atomic weight, measured in proton masses
 - Zbar - Average proton number among the isotopes present
+- Etaele - Electron chemical potential measured in mu/kT
+- Etapos - Positron chemical potential measured in mu/kT
 - dP/dT|Rho - Derivative of pressure with respect to temperature holding density fixed, measured in erg/cm^3/K
 - dP/dRho|T - Derivative of pressure with respect to density holding temperature fixed, measured in erg/g
 - dP/dA - Derivative of pressure with respect to Abar in erg/cm^3
@@ -98,8 +100,8 @@
 - dScoul/dRho|T - Derivative of coulomb entropy with respect to density holding temperature fixed, measured in erg*cm^3/g^2/K
 - dScoul/dA - Derivative of coulomb entropy with respect to Abar measured in erg/g/K
 - dScoul/dZ - Derivative of coulomb entropy with respect to Zbar measured in erg/g/K- Xni - ?
-- dEta/dT|Rho - Derivative of Eta with respect to T, holding density fixed, in erg/g/K
-- dEta/dRho|T - Derivative of Eta with respect to density, holding T fixed, in erg*cm^3/g^2
+- dEta/dT|Rho - Derivative of Etaele with respect to T, holding density fixed, in erg/g/K
+- dEta/dRho|T - Derivative of Etaele with respect to density, holding T fixed, in erg*cm^3/g^2
 - dEta/dA - Derivative of Etaele with respect to Abar in erg/g
 - dEta/dZ - Derivative of Etaele with respect to Zbar in erg/g
 - X(H) - Number fraction of atomic Hydrogen
@@ -117,6 +119,7 @@
 - gamma1gas - Adiabatic constant gamma 1 (dimensionless)
 - gamma2gas - Adiabatic constant gamma 2 (dimensionless)
 - gamma3gas - Adiabatic constant gamma 3 (dimensionless)
+- PlasGamma - Ratio of electrostatic to thermal energy in plasma
 - vsGas - Adiabatic sound speed
 - dLogRho/dLogT|P - Derivative of logRho with respect to logT, holding pressure fixed.
 - dLogRho/dLogP|T - Derivative of logRho with respect to logP, holding temperature fixed.
@@ -124,14 +127,14 @@
 - dLogS/dLogP|T - Derivative of logS with respect to logP, holding temperature fixed.
 - dLogT/dlogP|S - Derivative of logT with respect to logP, holding entropy fixed. Otherwise known as the adiabatic temperature gradient.
 - dLogT/dlogPgas|S - Derivative of logT with respect to logPgas, holding entropy fixed. Otherwise known as the gas adiabatic temperature gradient.
-
-- Xnem - ?
-- Xnefer - ?
-- Xne - ?
-- PlasG - ?
-- dSe - ?
-- dPe - ?
-- dSp - ?
-- 'dXne/dT|Rho','dXne/dRho|T','dXne/dA','dXne/dZ','Xnp',
-- Etaele - Electron chemical potential measured in eV
-- Etapos - Positron chemical potential measured in eV
+- Xnem - Number density of electrons assuming full ionization measured in cm^(-3) (Note: Must equal Xnefer, thereby constraining Etaele)
+- Xnefer - Number density of electrons from the Fermi integral measured in cm^(-3) (Note: Must equal Xnem, thereby constraining Etaele)
+- Xne - Another symbol for Xnem or Xnefer, measured in cm^(-3)
+- Xnp - Number density of protons, measured in cm^(-3)
+- dXne/dT|Rho - Derivative of Xne with respect to temperature at fixed density, measured in cm^(-3)K^(-1)
+- dXne/dRho|T - Derivative of Xne with respect to density at fixed temperature, measured in g
+- dXne/A - Derivative of Xne with respect to Abar, measured in cm^(-3)
+- dXne/Z - Derivative of Xne with respect to Zbar, measured in cm^(-3)
+- dSe - Thermodynamic consistency check of dE/dT|Rho=TdS/dT|Rho, measured in erg/g/K (should be zero if all is well)
+- dPe - Thermodynamic consistency check of P=d^2 E/dRho^2|T+TdP/dT|Rho, measured in erg/cm^3 (should be zero if all is well)
+- dSp - Thermodynamic consistency check of dP/dT|Rho = -d^2 S/dRho^2|T, measured in erg/cm^3/K (should be zero if all is well)
