@@ -170,6 +170,30 @@ def interpolateSources(sources, vals, newName, inNames, outNames, kine='linear')
 	return source(newInNames, outNames, contains, smoothMask, data)
 
 
+def wrapSource(s, transform, newInNames):
+	"""
+	Creates a source which transforms the input points before processing them.
+	The transform function must accept points in the usual format (numpy array of shape (N,len(newInNames)))
+	and return points in the usual format (numpy array of shape (N,len(inNames))).
+	The output of transform is then passed on to the source s.
+
+	Arguments:
+		s 			-- Source
+		transform 	-- Transformation function. Must take numpy input of shape (N,len(newInNames))
+					   and produce output of shape (N,len(InNames)).
+		newInNames 	-- New list of input names (given as strings).
+	"""
+	def data(points):
+		return s.data(transform(points))
+
+	def contains(points):
+		return s.contains(transform(points))
+
+	def smoothMask(points):
+		return s.smoothMask(transform(points))
+
+	return source(newInNames, s.outNames, contains, smoothMask, data)
+
 def sourceFromTables(grid, inNames, outNames, data, kind='linear', binaryMask=None, smoothingDist=4):
 	"""
 	An interpolator object which wraps equation of state tables.
@@ -254,7 +278,8 @@ def sourceFromTables(grid, inNames, outNames, data, kind='linear', binaryMask=No
 	elif kind == 'cubic':
 		data = np.copy(data)
 		data[np.isnan(data)] = 0
-		interpolator = [RectBivariateSpline(grid[0], grid[1], data[..., i], kx=3, ky=3) for i in range(data.shape[-1])]
+		interpolator = [RectBivariateSpline(grid[0], grid[1], data[..., i], kx=3, ky=3)
+                  for i in range(data.shape[-1])]
 
 		def dataFunc(points):
 			out = np.zeros((len(points), len(outNames)))
@@ -267,8 +292,10 @@ def sourceFromTables(grid, inNames, outNames, data, kind='linear', binaryMask=No
 
 	# The mask interpolators are always linear. This ensures that we don't get
 	# oscillation, negative values, or other ill-conditioning.
-	binaryMaskInterpolataor = RegularGridInterpolator(grid, binaryMaskTable, bounds_error=False, fill_value=0)
-	smoothMaskInterpolataor = RegularGridInterpolator(grid, smoothMaskTable, bounds_error=False, fill_value=0)
+	binaryMaskInterpolataor = RegularGridInterpolator(
+		grid, binaryMaskTable, bounds_error=False, fill_value=0)
+	smoothMaskInterpolataor = RegularGridInterpolator(
+		grid, smoothMaskTable, bounds_error=False, fill_value=0)
 
 	# If the binary mask interpolator gives us anything less than unity, it means that the requested point is either
 	# out of range, borders a point that is out of range, or (only if nonlinear) is using an out-of-range point for

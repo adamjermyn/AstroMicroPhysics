@@ -279,24 +279,13 @@ def helmSource(fname='SourceTables/helmholtz/helm_table.dat',logTmin=3.0,logTmax
 
 		# Sanitize inputs so that only numpy arrays come in
 
-		temp,den,abar,zbar = points
-
-		if not hasattr(temp, "__len__"):
-			temp = [temp]
-		if not hasattr(den, "__len__"):
-			den = [den]
-		if not hasattr(abar, "__len__"):
-			abar = [abar]
-		if not hasattr(zbar, "__len__"):
-			zbar = [zbar]
-
-		temp = np.array(temp)
-		den = np.array(den)
-		abar = np.array(abar)
-		zbar = np.array(zbar)
+		temp = points[:,0]
+		den = points[:,1]
+		abar = points[:,2]
+		zbar = points[:,3]
 
 		return 1-1.0*((temp<10**logTmin) | (temp>10**logTmax) | \
-					(den<10**logRhoMin) | (den>10**logRhoMax) | (abar<0) | (zbar<1))
+					(den<10**logRhoMin) | (den>10**logRhoMax) | (abar<1) | (zbar<1))
 
 	def smoothMask(points):
 
@@ -304,21 +293,10 @@ def helmSource(fname='SourceTables/helmholtz/helm_table.dat',logTmin=3.0,logTmax
 
 		# Sanitize inputs so that only numpy arrays come in
 
-		temp,den,abar,zbar = points
-
-		if not hasattr(temp, "__len__"):
-			temp = [temp]
-		if not hasattr(den, "__len__"):
-			den = [den]
-		if not hasattr(abar, "__len__"):
-			abar = [abar]
-		if not hasattr(zbar, "__len__"):
-			zbar = [zbar]	
-
-		temp = np.array(temp)
-		den = np.array(den)
-		abar = np.array(abar)
-		zbar = np.array(zbar)
+		temp = points[:,0]
+		den = points[:,1]
+		abar = points[:,2]
+		zbar = points[:,3]
 
 		x = (np.log10(temp)-logTmin)/(logTmax-logTmin)
 		ret *= np.maximum(0,1-2./(1+np.exp(30*x))-2./(1+np.exp(30*(1-x)))) # 30 was picked so that the transition happens over ~10% of the range
@@ -326,7 +304,7 @@ def helmSource(fname='SourceTables/helmholtz/helm_table.dat',logTmin=3.0,logTmax
 		ret *= np.maximum(0,1-2./(1+np.exp(30*x))-2./(1+np.exp(30*(1-x)))) # 30 was picked so that the transition happens over ~10% of the range
 
 		# Arbitrary abar>0, zbar>1 are allowed.
-		x = abar
+		x = abar-1+1e-10
 		ret *= np.maximum(0,1-2./(1+np.exp(30*x))) # 30 was picked so that the transition happens over ~10% of the range
 		x = zbar-1+1e-10 # The 1e-10 we add to give you some leeway if you really do want a pure hydrogen gas
 		ret *= np.maximum(0,1-2./(1+np.exp(30*x))) # 30 was picked so that the transition happens over ~10% of the range
@@ -341,7 +319,7 @@ def helmSource(fname='SourceTables/helmholtz/helm_table.dat',logTmin=3.0,logTmax
 		points - 2D Numpy array of shape (N,4). The four columns are:
 			temp - Temperature (K).
 			den  - Density (g/cm^3).
-			abar - Average atomic weight (in proton masses).
+			abar - Average atomic weight of nuclei (in proton masses).
 			zion - Average Z among the isotopes present.
 
 		The output of this method is a dictionary, the values of which are one-dimensional numpy arrays.
@@ -354,21 +332,10 @@ def helmSource(fname='SourceTables/helmholtz/helm_table.dat',logTmin=3.0,logTmax
 
 		# Sanitize inputs so that only numpy arrays come in
 
-		temp,den,abar,zbar = points
-
-		if not hasattr(temp, "__len__"):
-			temp = [temp]
-		if not hasattr(den, "__len__"):
-			den = [den]
-		if not hasattr(abar, "__len__"):
-			abar = [abar]
-		if not hasattr(zbar, "__len__"):
-			zbar = [zbar]
-
-		temp = np.array(temp)
-		den = np.array(den)
-		abar = np.array(abar)
-		zbar = np.array(zbar)
+		temp = points[:,0]
+		den = points[:,1]
+		abar = points[:,2]
+		zbar = points[:,3]
 
 		maxLen = max(len(temp),len(den),len(abar),len(zbar))
 		if maxLen > 1:
@@ -853,7 +820,7 @@ def helmSource(fname='SourceTables/helmholtz/helm_table.dat',logTmin=3.0,logTmax
 
 		dsp = -dentrdd*x/dpresdt - 1.0
 
-		ret = np.array([pres,dpresdt,dpresdd,dpresda,dpresdz,ener,denerdt,\
+		ret = np.transpose(np.array([pres,dpresdt,dpresdd,dpresda,dpresdz,ener,denerdt,\
 						denerdd,denerda,denerdz,entr,dentrdt,dentrdd,dentrda,\
 						dentrdz,pgas,dpgasdt,dpgasdd,dpgasda,dpgasdz,egas,degasdt,\
 						degasdd,degasda,degasdz,prad,dpraddt,dpraddd,dpradda,dpraddz,\
@@ -868,10 +835,20 @@ def helmSource(fname='SourceTables/helmholtz/helm_table.dat',logTmin=3.0,logTmax
 						dpcouldd,dpcoulda,dpcouldz,ecoul,decouldt,decouldd,decoulda,\
 						decouldz,scoul,dscouldt,dscouldd,dscoulda,dscouldz,plasg,dse,dpe,\
 						dsp,cv_gas,cp_gas,gam1_gas,gam2_gas,gam3_gas,nabad_gas,sound_gas,\
-						cv,cp,gam1,gam2,gam3,nabad,sound])
+						cv,cp,gam1,gam2,gam3,nabad,sound]))
 
-		ret[:,nanLocs] = np.nan # Set outputs corresponding to bad input locations to NaN
+		ret[nanLocs] = np.nan # Set outputs corresponding to bad input locations to NaN
 
 		return ret
 
 	return source(['T','Rho','Abar','Zbar'],outNames,contains,smoothMask,data)
+# (fname='SourceTables/helmholtz/helm_table.dat',logTmin=3.0,logTmax=13.0,\
+#				logRhoMin=-12.0,logRhoMax=15.0,tRes=101,rhoRes=271):
+h = helmSource()
+inVar = 'Rho'
+outVar = 'P'
+ranges = [10**np.linspace(3.,13.,num=30),np.linspace(1.,10.,num=10),np.linspace(1.,10.,num=10)]
+inMin = 1e-12
+inMax = 1e15
+outRange = 10**np.linspace(-10.,10.,num=100)
+s = inversion(h,inVar,outVar,ranges,inMin,inMax,outRange)
