@@ -24,7 +24,10 @@ which may be passed to this routine, rather than calling it many times on indivi
 points.
 """
 
+import sys
 import numpy as np
+sys.path.append('../')
+from sourceClass import *
 
 # Mathematical constants
 pi          = np.pi
@@ -174,129 +177,175 @@ def azHelper(ionmax=3,xmass=np.array([0.75,0.23,0.02]),\
 		return abar, zbar
 
 
-class helm:
-	"""
-	This class provides an object for storing and manipulating Helmholtz equation of state tables.
-	"""
-
-	def __init__(self,fname='SourceTables/helmholtz/helm_table.dat',logTmin=3.0,logTmax=13.0,\
+def helmSource(fname='SourceTables/helmholtz/helm_table.dat',logTmin=3.0,logTmax=13.0,\
 				logRhoMin=-12.0,logRhoMax=15.0,tRes=101,rhoRes=271):
-		"""
-		Arguments:
+	"""
+	This method constructs a source object for the Helmholtz tables.
 
-		fname   - Filename of table. Should be a string.
+	Arguments:
 
-		logTmin - Log10 of minimum temperature in the tables (K). Should be a float.
-		logTmax - Log10 of maximum temperature in the tables (K). Should be a float.
-		tRes    - Number of grid points in temperature in the tables. Should be an integer.
-		logRhoMin   -   Log10 of minimum density in the tables (g/cm^3). Should be a float.
-		logRhoMax   -   Log10 of maximum density in the tables (g/cm^3). Should be a float.
-		rhoRes  - Number of grid points in density in the tables. Should be an integer.
-		"""
+	fname   - Filename of table. Should be a string.
 
-		self.fname = fname
-		self.logTmin = logTmin
-		self.logTmax = logTmax
-		self.tRes = tRes
-		self.logRhoMin = logRhoMin
-		self.logRhoMax = logRhoMax
-		self.rhoRes = rhoRes
+	logTmin - Log10 of minimum temperature in the tables (K). Should be a float.
+	logTmax - Log10 of maximum temperature in the tables (K). Should be a float.
+	tRes    - Number of grid points in temperature in the tables. Should be an integer.
+	logRhoMin   -   Log10 of minimum density in the tables (g/cm^3). Should be a float.
+	logRhoMax   -   Log10 of maximum density in the tables (g/cm^3). Should be a float.
+	rhoRes  - Number of grid points in density in the tables. Should be an integer.
 
-		# Table limits and declaration
-		self.logTRan = np.linspace(logTmin,logTmax,num=tRes,endpoint=True)
-		self.logRhoRan = np.linspace(logRhoMin,logRhoMax,num=rhoRes,endpoint=True)
-		self.logTstep = self.logTRan[1] - self.logTRan[0]
-		self.logRhoStep = self.logRhoRan[1] - self.logRhoRan[0]
-		self.tRan = 10**self.logTRan
-		self.rhoRan = 10**self.logRhoRan
+	"""
+
+	# Table limits and declaration
+	logTRan = np.linspace(logTmin,logTmax,num=tRes,endpoint=True)
+	logRhoRan = np.linspace(logRhoMin,logRhoMax,num=rhoRes,endpoint=True)
+	logTstep = logTRan[1] - logTRan[0]
+	logRhoStep = logRhoRan[1] - logRhoRan[0]
+	tRan = 10**logTRan
+	rhoRan = 10**logRhoRan
 
 
-		# We store the tables as a dictionary, with named 2D tables corresponding to the stored variables
-		self.names = ['f','fd','ft','fdd','ftt','fdt','fddt','fdtt','fddtt','dpdf','dpdfd'\
-				,'dpdft','dpdfdt','ef','efd','eft','efdt','xf','xfd','xft','xfdt']
-		tables = {n:np.zeros((self.rhoRan.shape[0],self.tRan.shape[0])) for n in self.names}
+	# We store the tables as a dictionary, with named 2D tables corresponding to the stored variables
+	names = ['f','fd','ft','fdd','ftt','fdt','fddt','fdtt','fddtt','dpdf','dpdfd'\
+			,'dpdft','dpdfdt','ef','efd','eft','efdt','xf','xfd','xft','xfdt']
+	tables = {n:np.zeros((rhoRan.shape[0],tRan.shape[0])) for n in names}
 
-		# Open Helmholtz table for reading
-		fi = open(fname)
+	# Open Helmholtz table for reading
+	fi = open(fname)
 
-		# Read the Helmholtz free energy and its derivatives
-		for j in range(len(self.tRan)):
-			for i in range(len(self.rhoRan)):
-				s = fi.readline().rstrip('\n')[2:].split(' ')
-				s = [float(a) for a in s if a!='' and a!='\n']
-				for k in range(9):
-					tables[self.names[k]][i,j] = s[k]
+	# Read the Helmholtz free energy and its derivatives
+	for j in range(len(tRan)):
+		for i in range(len(rhoRan)):
+			s = fi.readline().rstrip('\n')[2:].split(' ')
+			s = [float(a) for a in s if a!='' and a!='\n']
+			for k in range(9):
+				tables[names[k]][i,j] = s[k]
 
-		# Read the pressure derivative with density
-		for j in range(len(self.tRan)):
-			for i in range(len(self.rhoRan)):
-				s = fi.readline().rstrip('\n')[2:].split(' ')
-				s = [a for a in s if a!='' and a!='\n']
-				for k in range(4):
-					tables[self.names[9+k]][i,j] = s[k]
+	# Read the pressure derivative with density
+	for j in range(len(tRan)):
+		for i in range(len(rhoRan)):
+			s = fi.readline().rstrip('\n')[2:].split(' ')
+			s = [a for a in s if a!='' and a!='\n']
+			for k in range(4):
+				tables[names[9+k]][i,j] = s[k]
 
-		# Read the electron chemical potentials
-		for j in range(len(self.tRan)):
-			for i in range(len(self.rhoRan)):
-				s = fi.readline().rstrip('\n')[2:].split(' ')
-				s = [a for a in s if a!='' and a!='\n']
-				for k in range(4):
-					tables[self.names[13+k]][i,j] = s[k]
+	# Read the electron chemical potentials
+	for j in range(len(tRan)):
+		for i in range(len(rhoRan)):
+			s = fi.readline().rstrip('\n')[2:].split(' ')
+			s = [a for a in s if a!='' and a!='\n']
+			for k in range(4):
+				tables[names[13+k]][i,j] = s[k]
 
-		# Read the nuclear densities
-		for j in range(len(self.tRan)):
-			for i in range(len(self.rhoRan)):
-				s = fi.readline().rstrip('\n')[2:].split(' ')
-				s = [a for a in s if a!='' and a!='\n']
-				for k in range(4):
-					tables[self.names[17+k]][i,j] = s[k]
+	# Read the nuclear densities
+	for j in range(len(tRan)):
+		for i in range(len(rhoRan)):
+			s = fi.readline().rstrip('\n')[2:].split(' ')
+			s = [a for a in s if a!='' and a!='\n']
+			for k in range(4):
+				tables[names[17+k]][i,j] = s[k]
 
-		fi.close()
+	fi.close()
 
-		self.tables = tables
+	# Construct the temperature and density deltas and their inverses
+	dT = np.diff(tRan)
+	dT2 = dT**2
+	dT3 = dT**3
+	dTinverse = 1./dT
+	dT2inverse = 1./dT2
+	dT3inverse = 1./dT3
+	dRho = np.diff(rhoRan)
+	dRho2 = dRho**2
+	dRho3 = dRho**3
+	dRhoInverse = 1./dRho
+	dRho2Inverse = 1./dRho2
+	dRho3Inverse = 1./dRho3
 
+	# Return names - These are left unchanged from the original fortran code to make it easier to read this code.
+	# The filtered method takes (and defines) a specific subset of these needed for most stellar codes.
+	outNames = ['P','dP/dT|Rho','dP/dRho|T','dP/dA','dP/dZ','E','dE/dT|Rho','dE/dRho|T','dE/dA','dE/dZ','S','dS/dT|Rho',\
+					 'dS/dRho|T','dS/dA','dS/dZ','Pgas','dPgas/dT|Rho','dPgas/dRho|T','dPgas/dA','dPgas/dZ','Egas','dEgas/dT|Rho',\
+					 'dEgas/dRho|T','dEgas/dA','dEgas/dZ','Prad','dPrad/dT|Rho','dPrad/dRho|T','dPrad/dA','dPrad/dZ','Erad',\
+					 'dErad/dT|Rho','dErad/dRho|T','dErad/dA','dErad/dZ','Srad','dSrad/dT|Rho','dSrad/dRho|T','dSrad/dA','dSrad/dZ',\
+					 'Pion','dPion/dT|Rho','dPion/dRho|T','dPion/dA','dPion/dZ','Eion','dEion/dT|Rho','dEion/dRho|T','dEion/dA',\
+					 'dEion/dZ','Sion','dSion/dT|Rho','dSion/dRho|T','dSion/dA','dSion/dZ','Xni','Pele','Ppos','dPep/dT|Rho','dPep/dRho|T',\
+					 'dPep/dA','dPep/dZ','Eele','Epos','dEep/dT|Rho','dEep/dRho|T','dEep/dA','dEep/dZ','Sele','Spos','dSep/dT|Rho','dSep/dT|Rho',\
+					 'dSep/dA','dSep/dZ','Xnem','Xnefer','dXne/dT|Rho','dXne/dRho|T','dXne/dA','dXne/dZ','Xnp','Zbar','Etaele','dEta/dT|Rho',\
+					 'dEta/dRho|T','dEta/dA','dEta/dZ','Etapos','Pcoul','dPcoul/dT|Rho','dPcoul/dRho|T','dPcoul/dA','dPcoul/dZ','Ecoul',\
+					 'dEcoul/dT|Rho','dEcoul/dRho|T','dEcoul/dA','dEcoul/dZ','Scoul','dScoul/dT|Rho','dScoul/dRho|T','dScoul/dA','dScoul/dZ',\
+					 'PlasGamma','dSe','dPe','dSp','CVgas','CPgas','gamma1gas','gamma2gas','gamma3gas','dLogT/dlogPgas|S','vsGas','CV','CP','gamma1',\
+					 'gamma2','gamma3','dLogT/dlogP|S','vs']
 
-		# Construct the temperature and density deltas and their inverses
-		self.dT = np.diff(self.tRan)
-		self.dT2 = self.dT**2
-		self.dT3 = self.dT**3
-		self.dTinverse = 1./self.dT
-		self.dT2inverse = 1./self.dT2
-		self.dT3inverse = 1./self.dT3
-		self.dRho = np.diff(self.rhoRan)
-		self.dRho2 = self.dRho**2
-		self.dRho3 = self.dRho**3
-		self.dRhoInverse = 1./self.dRho
-		self.dRho2Inverse = 1./self.dRho2
-		self.dRho3Inverse = 1./self.dRho3
+	def contains(points):
 
-		# Return names - These are left unchanged from the original fortran code to make it easier to read this code.
-		# The filtered method takes (and defines) a specific subset of these needed for most stellar codes.
-		self.outNames = ['P','dP/dT|Rho','dP/dRho|T','dP/dA','dP/dZ','E','dE/dT|Rho','dE/dRho|T','dE/dA','dE/dZ','S','dS/dT|Rho',\
-						 'dS/dRho|T','dS/dA','dS/dZ','Pgas','dPgas/dT|Rho','dPgas/dRho|T','dPgas/dA','dPgas/dZ','Egas','dEgas/dT|Rho',\
-						 'dEgas/dRho|T','dEgas/dA','dEgas/dZ','Prad','dPrad/dT|Rho','dPrad/dRho|T','dPrad/dA','dPrad/dZ','Erad',\
-						 'dErad/dT|Rho','dErad/dRho|T','dErad/dA','dErad/dZ','Srad','dSrad/dT|Rho','dSrad/dRho|T','dSrad/dA','dSrad/dZ',\
-						 'Pion','dPion/dT|Rho','dPion/dRho|T','dPion/dA','dPion/dZ','Eion','dEion/dT|Rho','dEion/dRho|T','dEion/dA',\
-						 'dEion/dZ','Sion','dSion/dT|Rho','dSion/dRho|T','dSion/dA','dSion/dZ','Xni','Pele','Ppos','dPep/dT|Rho','dPep/dRho|T',\
-						 'dPep/dA','dPep/dZ','Eele','Epos','dEep/dT|Rho','dEep/dRho|T','dEep/dA','dEep/dZ','Sele','Spos','dSep/dT|Rho','dSep/dT|Rho',\
-						 'dSep/dA','dSep/dZ','Xnem','Xnefer','dXne/dT|Rho','dXne/dRho|T','dXne/dA','dXne/dZ','Xnp','Zbar','Etaele','dEta/dT|Rho',\
-						 'dEta/dRho|T','dEta/dA','dEta/dZ','Etapos','Pcoul','dPcoul/dT|Rho','dPcoul/dRho|T','dPcoul/dA','dPcoul/dZ','Ecoul',\
-						 'dEcoul/dT|Rho','dEcoul/dRho|T','dEcoul/dA','dEcoul/dZ','Scoul','dScoul/dT|Rho','dScoul/dRho|T','dScoul/dA','dScoul/dZ',\
-						 'PlasGamma','dSe','dPe','dSp','CVgas','CPgas','gamma1gas','gamma2gas','gamma3gas','dLogT/dlogPgas|S','vsGas','CV','CP','gamma1',\
-						 'gamma2','gamma3','dLogT/dlogP|S','vs']
+		# Sanitize inputs so that only numpy arrays come in
 
-	def eos(self,temp,den,abar,zbar):
+		temp,den,abar,zbar = points
+
+		if not hasattr(temp, "__len__"):
+			temp = [temp]
+		if not hasattr(den, "__len__"):
+			den = [den]
+		if not hasattr(abar, "__len__"):
+			abar = [abar]
+		if not hasattr(zbar, "__len__"):
+			zbar = [zbar]
+
+		temp = np.array(temp)
+		den = np.array(den)
+		abar = np.array(abar)
+		zbar = np.array(zbar)
+
+		return 1-1.0*((temp<10**logTmin) | (temp>10**logTmax) | \
+					(den<10**logRhoMin) | (den>10**logRhoMax) | (abar<0) | (zbar<1))
+
+	def smoothMask(points):
+
+		ret = contains(points)
+
+		# Sanitize inputs so that only numpy arrays come in
+
+		temp,den,abar,zbar = points
+
+		if not hasattr(temp, "__len__"):
+			temp = [temp]
+		if not hasattr(den, "__len__"):
+			den = [den]
+		if not hasattr(abar, "__len__"):
+			abar = [abar]
+		if not hasattr(zbar, "__len__"):
+			zbar = [zbar]	
+
+		temp = np.array(temp)
+		den = np.array(den)
+		abar = np.array(abar)
+		zbar = np.array(zbar)
+
+		x = (np.log10(temp)-logTmin)/(logTmax-logTmin)
+		ret *= np.maximum(0,1-2./(1+np.exp(30*x))-2./(1+np.exp(30*(1-x)))) # 30 was picked so that the transition happens over ~10% of the range
+		x = (np.log10(den)-logRhoMin)/(logRhoMax-logRhoMin)
+		ret *= np.maximum(0,1-2./(1+np.exp(30*x))-2./(1+np.exp(30*(1-x)))) # 30 was picked so that the transition happens over ~10% of the range
+
+		# Arbitrary abar>0, zbar>1 are allowed.
+		x = abar
+		ret *= np.maximum(0,1-2./(1+np.exp(30*x))) # 30 was picked so that the transition happens over ~10% of the range
+		x = zbar-1+1e-10 # The 1e-10 we add to give you some leeway if you really do want a pure hydrogen gas
+		ret *= np.maximum(0,1-2./(1+np.exp(30*x))) # 30 was picked so that the transition happens over ~10% of the range
+
+		return ret
+
+	def data(points):
 		"""
 		Computes the equation of state and returns the various thermodynamic quantities.
 
 		Arguments:
-		temp - Temperature (K).
-		den  - Density (g/cm^3).
-		abar - Average atomic weight (in proton masses).
-		zion - Average Z among the isotopes present.
+		points - 2D Numpy array of shape (N,4). The four columns are:
+			temp - Temperature (K).
+			den  - Density (g/cm^3).
+			abar - Average atomic weight (in proton masses).
+			zion - Average Z among the isotopes present.
 
 		The output of this method is a dictionary, the values of which are one-dimensional numpy arrays.
-		The keys are in self.outNames, and the corresponding definitions are given in the variable declarations file.
+		The keys are in outNames, and the corresponding definitions are given in the variable declarations file.
 
 		All arguments should either be floats or 1-dimensional numpy arrays. Mixed inputs
 		between floats and arrays are allowed so long as each array present has the same length.
@@ -304,6 +353,8 @@ class helm:
 		"""
 
 		# Sanitize inputs so that only numpy arrays come in
+
+		temp,den,abar,zbar = points
 
 		if not hasattr(temp, "__len__"):
 			temp = [temp]
@@ -332,12 +383,12 @@ class helm:
 
 		# Bomb-proof the input... we'll set all outputs corresponding to bad inputs to NaN
 		# at the end.
-		nanLocs = np.where((temp<10**self.logTmin) | (temp>10**self.logTmax) | \
-					(den<10**self.logRhoMin) | (den>10**self.logRhoMax))
-		temp[temp<10**self.logTmin] = 10**self.logTmin
-		temp[temp>10**self.logTmax] = 10**self.logTmax
-		den[den<10**self.logRhoMin] = 10**self.logRhoMin
-		den[den>10**self.logRhoMax] = 10**self.logRhoMax
+		nanLocs = np.where((temp<10**logTmin) | (temp>10**logTmax) | \
+					(den<10**logRhoMin) | (den>10**logRhoMax))
+		temp[temp<10**logTmin] = 10**logTmin
+		temp[temp>10**logTmax] = 10**logTmax
+		den[den<10**logRhoMin] = 10**logRhoMin
+		den[den>10**logRhoMax] = 10**logRhoMax
 
 		# Initialize
 		ytot1 = 1./abar
@@ -407,63 +458,63 @@ class helm:
 		din = ye*den
 
 		# Locate this temperature and density
-		j = np.floor(((np.log10(temp)-self.logTmin)/self.logTstep)).astype(int)
-		i = np.floor(((np.log10(din)-self.logRhoMin)/self.logRhoStep)).astype(int)
+		j = np.floor(((np.log10(temp)-logTmin)/logTstep)).astype(int)
+		i = np.floor(((np.log10(din)-logRhoMin)/logRhoStep)).astype(int)
 		i[i<0] = 0
-		i[i>=self.rhoRes] = self.rhoRes - 1
+		i[i>=rhoRes] = rhoRes - 1
 		j[j<0] = 0
-		j[j>=self.tRes] = self.tRes - 1
+		j[j>=tRes] = tRes - 1
 
 		# Access the relevant portions of the table
-		fi = fiLookup(self.tables,i,j,['f','ft','ftt','fd','fdd','fdt','fddt','fdtt','fddtt'])
+		fi = fiLookup(tables,i,j,['f','ft','ftt','fd','fdd','fdt','fddt','fdtt','fddtt'])
 
 		# Various differences
-		xt  = np.maximum((temp - self.tRan[j])*self.dTinverse[j], np.zeros(temp.shape))
-		xd  = np.maximum((din - self.rhoRan[i])*self.dRhoInverse[i], np.zeros(din.shape))
+		xt  = np.maximum((temp - tRan[j])*dTinverse[j], np.zeros(temp.shape))
+		xd  = np.maximum((din - rhoRan[i])*dRhoInverse[i], np.zeros(din.shape))
 		mxt = 1.0 - xt
 		mxd = 1.0 - xd
 
 		# The six density and six temperature basis functions
 		si0t =   psi0(xt)
-		si1t =   psi1(xt)*self.dT[j]
-		si2t =   psi2(xt)*self.dT2[j]
+		si1t =   psi1(xt)*dT[j]
+		si2t =   psi2(xt)*dT2[j]
 
 		si0mt =  psi0(mxt)
-		si1mt = -psi1(mxt)*self.dT[j]
-		si2mt =  psi2(mxt)*self.dT2[j]
+		si1mt = -psi1(mxt)*dT[j]
+		si2mt =  psi2(mxt)*dT2[j]
 
 		si0d =   psi0(xd)
-		si1d =   psi1(xd)*self.dRho[i]
-		si2d =   psi2(xd)*self.dRho2[i]
+		si1d =   psi1(xd)*dRho[i]
+		si2d =   psi2(xd)*dRho2[i]
 
 		si0md =  psi0(mxd)
-		si1md = -psi1(mxd)*self.dRho[i]
-		si2md =  psi2(mxd)*self.dRho2[i]
+		si1md = -psi1(mxd)*dRho[i]
+		si2md =  psi2(mxd)*dRho2[i]
 
 		# Derivatives of the weight functions
-		dsi0t =   dpsi0(xt)*self.dTinverse[j]
+		dsi0t =   dpsi0(xt)*dTinverse[j]
 		dsi1t =   dpsi1(xt)
-		dsi2t =   dpsi2(xt)*self.dT[j]
+		dsi2t =   dpsi2(xt)*dT[j]
 
-		dsi0mt = -dpsi0(mxt)*self.dTinverse[j]
+		dsi0mt = -dpsi0(mxt)*dTinverse[j]
 		dsi1mt =  dpsi1(mxt)
-		dsi2mt = -dpsi2(mxt)*self.dT[j]
+		dsi2mt = -dpsi2(mxt)*dT[j]
 
-		dsi0d =   dpsi0(xd)*self.dRhoInverse[i]
+		dsi0d =   dpsi0(xd)*dRhoInverse[i]
 		dsi1d =   dpsi1(xd)
-		dsi2d =   dpsi2(xd)*self.dRho[i]
+		dsi2d =   dpsi2(xd)*dRho[i]
 
-		dsi0md = -dpsi0(mxd)*self.dRhoInverse[i]
+		dsi0md = -dpsi0(mxd)*dRhoInverse[i]
 		dsi1md =  dpsi1(mxd)
-		dsi2md = -dpsi2(mxd)*self.dRho[i]
+		dsi2md = -dpsi2(mxd)*dRho[i]
 
 		# Second derivatives of the weight functions
-		ddsi0t =   ddpsi0(xt)*self.dT2inverse[j]
-		ddsi1t =   ddpsi1(xt)*self.dTinverse[j]
+		ddsi0t =   ddpsi0(xt)*dT2inverse[j]
+		ddsi1t =   ddpsi1(xt)*dTinverse[j]
 		ddsi2t =   ddpsi2(xt)
 
-		ddsi0mt =  ddpsi0(mxt)*self.dT2inverse[j]
-		ddsi1mt = -ddpsi1(mxt)*self.dTinverse[j]
+		ddsi0mt =  ddpsi0(mxt)*dT2inverse[j]
+		ddsi1mt = -ddpsi1(mxt)*dTinverse[j]
 		ddsi2mt =  ddpsi2(mxt)
 
 		# The free energy
@@ -494,32 +545,32 @@ class helm:
 		# Now get the pressure derivative with density, chemical potential, and electron positron number densities
 		# Get the interpolation weight functions
 		si0t   =  xpsi0(xt)
-		si1t   =  xpsi1(xt)*self.dT[j]
+		si1t   =  xpsi1(xt)*dT[j]
 
 		si0mt  =  xpsi0(mxt)
-		si1mt  =  -xpsi1(mxt)*self.dT[j]
+		si1mt  =  -xpsi1(mxt)*dT[j]
 
 		si0d   =  xpsi0(xd)
-		si1d   =  xpsi1(xd)*self.dRho[i]
+		si1d   =  xpsi1(xd)*dRho[i]
 
 		si0md  =  xpsi0(mxd)
-		si1md  =  -xpsi1(mxd)*self.dRho[i]
+		si1md  =  -xpsi1(mxd)*dRho[i]
 
 		# Derivatives of weight functions
-		dsi0t  = xdpsi0(xt)*self.dTinverse[j]
+		dsi0t  = xdpsi0(xt)*dTinverse[j]
 		dsi1t  = xdpsi1(xt)
 
-		dsi0mt = -xdpsi0(mxt)*self.dTinverse[j]
+		dsi0mt = -xdpsi0(mxt)*dTinverse[j]
 		dsi1mt = xdpsi1(mxt)
 
-		dsi0d  = xdpsi0(xd)*self.dRhoInverse[i]
+		dsi0d  = xdpsi0(xd)*dRhoInverse[i]
 		dsi1d  = xdpsi1(xd)
 
-		dsi0md = -xdpsi0(mxd)*self.dRhoInverse[i]
+		dsi0md = -xdpsi0(mxd)*dRhoInverse[i]
 		dsi1md = xdpsi1(mxd)
 
 		# Access the relevant portions of the table
-		fi = fiLookup(self.tables,i,j,['dpdf','dpdft','dpdfd','dpdfdt'])
+		fi = fiLookup(tables,i,j,['dpdf','dpdft','dpdfd','dpdfdt'])
 
 		# Pressure derivative with density
 		dpepdd  = h3(fi, \
@@ -528,7 +579,7 @@ class helm:
 		dpepdd  = np.maximum(ye * dpepdd,1.0e-30)
 
 		# Access the relevant portions of the table
-		fi = fiLookup(self.tables,i,j,['ef','eft','efd','efdt'])
+		fi = fiLookup(tables,i,j,['ef','eft','efd','efdt'])
 
 		# Electron chemcial potential etaele
 		etaele  = h3(fi, \
@@ -551,7 +602,7 @@ class helm:
 		detadz =  x * den * ytot1
 
 	   # Access the relevant portions of the table
-		fi = fiLookup(self.tables,i,j,['xf','xft','xfd','xfdt'])
+		fi = fiLookup(tables,i,j,['xf','xft','xfd','xfdt'])
 
 		# Electron and positron number densities
 		xnefer   = h3(fi, \
@@ -821,5 +872,6 @@ class helm:
 
 		ret[:,nanLocs] = np.nan # Set outputs corresponding to bad input locations to NaN
 
-		return {a:b for a,b in zip(*(self.outNames,ret))}
+		return ret
 
+	return source(['T','Rho','Abar','Zbar'],outNames,contains,smoothMask,data)
