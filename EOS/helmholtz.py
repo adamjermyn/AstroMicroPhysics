@@ -842,13 +842,3 @@ def helmSource(fname='SourceTables/helmholtz/helm_table.dat',logTmin=3.0,logTmax
 		return ret
 
 	return source(['T','Rho','Abar','Zbar'],outNames,contains,smoothMask,data)
-# (fname='SourceTables/helmholtz/helm_table.dat',logTmin=3.0,logTmax=13.0,\
-#				logRhoMin=-12.0,logRhoMax=15.0,tRes=101,rhoRes=271):
-h = helmSource()
-inVar = 'Rho'
-outVar = 'P'
-ranges = [10**np.linspace(3.,13.,num=30),np.linspace(1.,10.,num=10),np.linspace(1.,10.,num=10)]
-inMin = 1e-12
-inMax = 1e15
-outRange = 10**np.linspace(-10.,10.,num=100)
-s = inversion(h,inVar,outVar,ranges,inMin,inMax,outRange)
