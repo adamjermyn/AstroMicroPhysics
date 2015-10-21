@@ -203,6 +203,12 @@ def helmSource(fname='SourceTables/helmholtz/helm_table.dat',logTmin=3.0,logTmax
 	tRan = 10**logTRan
 	rhoRan = 10**logRhoRan
 
+	# Compute proper limits (factoring in interpoltaion requirements)
+	maxInputT = 10**(logTmax-(logTmax-logTmin)*(1./tRes))
+	minInputT = 10**(logTmin+(logTmax-logTmin)*(1./tRes))
+	maxInputRho = 10**(logRhoMax-(logRhoMax-logRhoMin)*(1./tRes))
+	minInputRho = 10**(logRhoMin+(logRhoMax-logRhoMin)*(1./tRes))
+
 
 	# We store the tables as a dictionary, with named 2D tables corresponding to the stored variables
 	names = ['f','fd','ft','fdd','ftt','fdt','fddt','fdtt','fddtt','dpdf','dpdfd'\
@@ -277,30 +283,26 @@ def helmSource(fname='SourceTables/helmholtz/helm_table.dat',logTmin=3.0,logTmax
 
 	def contains(points):
 
-		# Sanitize inputs so that only numpy arrays come in
-
 		temp = points[:,0]
 		den = points[:,1]
 		abar = points[:,2]
 		zbar = points[:,3]
 
-		return 1-1.0*((temp<10**logTmin) | (temp>10**logTmax) | \
-					(den<10**logRhoMin) | (den>10**logRhoMax) | (abar<1) | (zbar<1))
+		return 1-1.0*((temp<minInputT) | (temp>maxInputT) | \
+					(den<minInputRho) | (den>maxInputRho) | (abar<1) | (zbar<1))
 
 	def smoothMask(points):
 
 		ret = contains(points)
 
-		# Sanitize inputs so that only numpy arrays come in
-
 		temp = points[:,0]
 		den = points[:,1]
 		abar = points[:,2]
 		zbar = points[:,3]
 
-		x = (np.log10(temp)-logTmin)/(logTmax-logTmin)
+		x = (np.log10(temp)-np.log10(minInputT))/(np.log10(maxInputT)-np.logT(minInputT))
 		ret *= np.maximum(0,1-2./(1+np.exp(30*x))-2./(1+np.exp(30*(1-x)))) # 30 was picked so that the transition happens over ~10% of the range
-		x = (np.log10(den)-logRhoMin)/(logRhoMax-logRhoMin)
+		x = (np.log10(den)-np.log10(minInputRho))/(np.log10(maxInputRho)-np.log10(minInputRho))
 		ret *= np.maximum(0,1-2./(1+np.exp(30*x))-2./(1+np.exp(30*(1-x)))) # 30 was picked so that the transition happens over ~10% of the range
 
 		# Arbitrary abar>0, zbar>1 are allowed.
@@ -325,8 +327,7 @@ def helmSource(fname='SourceTables/helmholtz/helm_table.dat',logTmin=3.0,logTmax
 		The output of this method is a dictionary, the values of which are one-dimensional numpy arrays.
 		The keys are in outNames, and the corresponding definitions are given in the variable declarations file.
 
-		All arguments should either be floats or 1-dimensional numpy arrays. Mixed inputs
-		between floats and arrays are allowed so long as each array present has the same length.
+		All arguments should be 1-dimensional numpy arrays.
 		The return value will either be a 2-dimensional vector.
 		"""
 
@@ -336,17 +337,6 @@ def helmSource(fname='SourceTables/helmholtz/helm_table.dat',logTmin=3.0,logTmax
 		den = points[:,1]
 		abar = points[:,2]
 		zbar = points[:,3]
-
-		maxLen = max(len(temp),len(den),len(abar),len(zbar))
-		if maxLen > 1:
-			if len(temp) == 1:
-				temp = temp[0]*np.ones(maxLen)
-			if len(den) == 1:
-				den = den[0]*np.ones(maxLen)
-			if len(abar) == 1:
-				abar = abar[0]*np.ones(maxLen)
-			if len(zbar) == 1:
-				zbar = zbar[0]*np.ones(maxLen)	
 
 		# Bomb-proof the input... we'll set all outputs corresponding to bad inputs to NaN
 		# at the end.
@@ -428,9 +418,9 @@ def helmSource(fname='SourceTables/helmholtz/helm_table.dat',logTmin=3.0,logTmax
 		j = np.floor(((np.log10(temp)-logTmin)/logTstep)).astype(int)
 		i = np.floor(((np.log10(din)-logRhoMin)/logRhoStep)).astype(int)
 		i[i<0] = 0
-		i[i>=rhoRes] = rhoRes - 1
+		i[i>=rhoRes-1] = rhoRes - 2
 		j[j<0] = 0
-		j[j>=tRes] = tRes - 1
+		j[j>=tRes-1] = tRes - 2
 
 		# Access the relevant portions of the table
 		fi = fiLookup(tables,i,j,['f','ft','ftt','fd','fdd','fdt','fddt','fdtt','fddtt'])
@@ -842,3 +832,49 @@ def helmSource(fname='SourceTables/helmholtz/helm_table.dat',logTmin=3.0,logTmax
 		return ret
 
 	return source(['T','Rho','Abar','Zbar'],outNames,contains,smoothMask,data)
+
+from scipy.optimize import minimize
+
+#def helmSource(fname='SourceTables/helmholtz/helm_table.dat',logTmin=3.0,logTmax=13.0,\
+#				logRhoMin=-12.0,logRhoMax=15.0,tRes=101,rhoRes=271):
+
+def rhoFromP(s, p, t, abar, zbar):
+	"""
+	This method finds the density corresponding to the given temperature and pressure.
+	Arguments:
+		s -- A Helmholtz source.
+		p -- Pressure given as a 1D numpy array
+		t -- Temperature given as a 1D numpy array
+		abar - Average atomic weight of nuclei (in proton masses).
+		zion - Average Z among the isotopes present.
+	"""
+	rhoMin = 1e-12*np.ones(len(t))
+	rhoMax = 1e15*np.ones(len(t))
+	ind = s.nameIndices('P')[0]
+	err = 1.
+	while err > 1e-8:
+		pts = np.transpose([t,(rhoMin+rhoMax)/2,abar,zbar])
+		pres = s.data(pts)[:,ind]
+		where1 = np.isfinite(rhoMin) & np.isfinite(rhoMax) & (pres<p)
+		where2 = np.isfinite(rhoMin) & np.isfinite(rhoMax) & (pres>=p)
+		rhoMin[where1] = (rhoMin+rhoMax)[where1]/2
+		rhoMax[where2] = (rhoMin+rhoMax)[where2]/2
+		rhoMin[(rhoMax-1e-12<1e-12) | (1e15 - rhoMin<1e5) | ((np.abs(1-pres/p)>1e-8) & ((rhoMax-rhoMin)/rhoMax < 1e-8))] = np.nan
+		rhoMax[(rhoMax-1e-12<1e-12) | (1e15 - rhoMin<1e5) | ((np.abs(1-pres/p)>1e-8) & ((rhoMax-rhoMin)/rhoMax < 1e-8))] = np.nan
+		err = np.sum(np.abs(1-(pres/p)[np.isfinite(pres)]))/len(t)
+		print err
+	rho = (rhoMin + rhoMax)/2	
+	rho[np.abs(1-pres/p)>1e-8] = np.nan
+	print 'a'
+	print rho
+
+h = helmSource()
+
+p, t, abar, zbar = np.meshgrid(10**np.linspace(0,10,num=100),10**np.linspace(3,13,num=100),np.linspace(0.,2.,num=5),np.linspace(0.,2.,num=5))
+
+p = np.reshape(p,(-1,))
+t = np.reshape(t,(-1,))
+abar = np.reshape(abar,(-1,))
+zbar = np.reshape(zbar,(-1,))
+
+rhoFromP(h,p,t,abar,zbar)
