@@ -180,9 +180,10 @@ def makeSources(dirname='SourceTables/SCVH/'):
 		xHelec = (1 - xH2 - xH) / 2.
 		xHeElec = (2 - 2 * xHe - xHeP) / 3.
 		# Compute beta, gamma, and delta from Eq. 54,55,56 in the SCVH paper
+		# Note that delta has 2/3 not 3/2. This is per a correction from Didier Saumon.
 		beta = (mH / mHe) * (y / (1 - y))
 		gamma = (3. / 2) * (1 + xH + 3 * xH2) / (1 + 2 * xHe + xHeP)
-		delta = beta * gamma * (3. / 2) * (2 - 2 * xHe - xHeP) / (1 - xH - xH2)
+		delta = beta * gamma * (2. / 3) * (2 - 2 * xHe - xHeP) / (1 - xH - xH2)
 
 		# Compute mixing entropy
 		ld = np.log(1 + delta)
@@ -263,11 +264,13 @@ def makeSources(dirname='SourceTables/SCVH/'):
                                  y * outHe[:, 5] * 10**(-outHe[:, 2]))  # Interpolate dLogRho/dLogT
 		out[:, 8] = (10**out[:, 4]) * ((1 - y) * outH[:, 6] * 10**(-outH[:, 2]) +
                                  y * outHe[:, 6] * 10**(-outHe[:, 2]))  # Interpolate dLogRho/dLogP
-		out[:, 9] = 10**out[:, 5] * ((1 - y) * 10**(-outH[:, 3]) * outH[:, 7] + y * 10 **
-                                        (-outHe[:, 3]) * outHe[:, 7]) + sm * 10**(-out[:, 5]) * dsmdt  # Interpolate dLogS/dLogT
+		# The next three formulas are corrected (relative to the paper)
+		# per communication with Didier Saumon.
+		out[:, 9] = 10**(-out[:, 5]) * ((1 - y) * 10**(outH[:, 3]) * outH[:, 7] + y * 10 **
+                                        (outHe[:, 3]) * outHe[:, 7] + sm * dsmdt)  # Interpolate dLogS/dLogT
 
-		out[:, 10] = 10**out[:, 5] * ((1 - y) * 10**(-outH[:, 3]) * outH[:, 8] + y * 10 **
-                                         (-outHe[:, 3]) * outHe[:, 8]) + sm * 10**(-out[:, 5]) * dsmdp  # Interpolate dLogS/dLogP
+		out[:, 10] = 10**(-out[:, 5]) * ((1 - y) * 10**(outH[:, 3]) * outH[:, 8] + y * 10 **
+                                        (outHe[:, 3]) * outHe[:, 8] + sm * dsmdp)  # Interpolate dLogS/dLogP
 		# Below we compute dLogS/dLogP (for computing the adiabatic thermal gradient) this way rather
 		# than as in the above two lines because this produces correct interpolation for dlnT/dlnP|S.
 		# Computing it as above compounds interpolation error and leads to non-vanishing error in the adiabatic
@@ -276,8 +279,8 @@ def makeSources(dirname='SourceTables/SCVH/'):
 		# relationship Sp/St = -dlnT/dlnP|S. Rather, we attempt to keep each quantity as consistent at the
 		# boundaries of Y as possible.
 
-		adDlogSDlogP = -10**out[:, 5] * ((1 - y) * 10**(-outH[:, 3]) * outH[:, 7]*outH[:, 9] + y * 10 **
-                                         (-outHe[:, 3]) * outHe[:, 7]*outHe[:,9]) + sm * 10**(-out[:, 5]) * dsmdp  # Interpolate dLogS/dLogP
+		adDlogSDlogP = -10**(-out[:, 5]) * ((1 - y) * 10**(outH[:, 3]) * outH[:, 7]*outH[:, 9] + y * 10 **
+                                         (outHe[:, 3]) * outHe[:, 7]*outHe[:,9] + sm * dsmdp) # Interpolate dLogS/dLogP
 		out[:, 11] = -adDlogSDlogP / out[:, 9]
 
 		return out
